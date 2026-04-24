@@ -2,7 +2,12 @@ import re
 import openai
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from llm_utils import _common_llm_params, resolve_model_config, get_model_choices
+from llm_utils import (
+    BufferedStreamingHandler,
+    _common_llm_params,
+    resolve_model_config,
+    get_model_choices,
+)
 from config import (
     OPENAI_API_KEY,
     ANTHROPIC_API_KEY,
@@ -10,39 +15,33 @@ from config import (
     OPENROUTER_API_KEY,
 )
 import logging
-import re
-
-import warnings
-
-warnings.filterwarnings("ignore")
 
 
 def get_llm(model_choice):
-    # Look up the configuration (cloud or local Ollama)
     config = resolve_model_config(model_choice)
 
-    if config is None:  # Extra error check
+    if config is None:
         supported_models = get_model_choices()
         raise ValueError(
             f"Unsupported LLM model: '{model_choice}'. "
             f"Supported models (case-insensitive match) are: {', '.join(supported_models)}"
         )
 
-    # Extract the necessary information from the configuration
     llm_class = config["class"]
     model_specific_params = config["constructor_params"]
 
-    # Combine common parameters with model-specific parameters
-    # Model-specific parameters will override common ones if there are any conflicts
-    all_params = {**_common_llm_params, **model_specific_params}
+    # Create a fresh handler for every LLM instance so pipeline stages
+    # (refine, filter, summarize) never share handler state or ui_callback.
+    fresh_handler = BufferedStreamingHandler(buffer_limit=60)
+    all_params = {
+        **_common_llm_params,
+        **model_specific_params,
+        "callbacks": [fresh_handler],
+    }
 
-    # Validate that the required credentials exist before we hit the API
     _ensure_credentials(model_choice, llm_class, model_specific_params)
 
-    # Create the LLM instance using the gathered parameters
-    llm_instance = llm_class(**all_params)
-
-    return llm_instance
+    return llm_class(**all_params)
 
 
 def _ensure_credentials(model_choice: str, llm_class, model_params: dict) -> None:
@@ -113,13 +112,10 @@ def filter_results(llm, query, results):
     try:
         result_indices = chain.invoke({"query": query, "results": final_str})
     except openai.RateLimitError as e:
-        print(
-            f"Rate limit error: {e} \n Truncating to Web titles only with 30 characters"
-        )
+        print(f"Rate limit error: {e} \n Truncating to Web titles only with 30 characters")
         final_str = _generate_final_string(results, truncate=True)
         result_indices = chain.invoke({"query": query, "results": final_str})
 
-    # Select top_k results using original (non-truncated) results
     parsed_indices = []
     for match in re.findall(r"\d+", result_indices):
         try:
@@ -129,11 +125,8 @@ def filter_results(llm, query, results):
         except ValueError:
             continue
 
-    # Remove duplicates while preserving order
     seen = set()
-    parsed_indices = [
-        i for i in parsed_indices if not (i in seen or seen.add(i))
-    ]
+    parsed_indices = [i for i in parsed_indices if not (i in seen or seen.add(i))]
 
     if not parsed_indices:
         logging.warning(
@@ -144,43 +137,22 @@ def filter_results(llm, query, results):
         )
         parsed_indices = list(range(1, min(len(results), 20) + 1))
 
-    top_results = [results[i - 1] for i in parsed_indices[:20]]
-
-    return top_results
+    return [results[i - 1] for i in parsed_indices[:20]]
 
 
 def _generate_final_string(results, truncate=False):
-    """
-    Generate a formatted string from the search results for LLM processing.
-    """
-
-    if truncate:
-        # Use only the first 35 characters of the title
-        max_title_length = 30
-        # Do not use link at all
-        max_link_length = 0
-
+    """Generate a formatted string from search results for LLM processing."""
     final_str = []
     for i, res in enumerate(results):
-        # Truncate link at .onion for display
         truncated_link = re.sub(r"(?<=\.onion).*", "", res["link"])
         title = re.sub(r"[^0-9a-zA-Z\-\.]", " ", res["title"])
         if truncated_link == "" and title == "":
             continue
 
         if truncate:
-            # Truncate title to max_title_length characters
-            title = (
-                title[:max_title_length] + "..."
-                if len(title) > max_title_length
-                else title
-            )
-            # Truncate link to max_link_length characters
-            truncated_link = (
-                truncated_link[:max_link_length] + "..."
-                if len(truncated_link) > max_link_length
-                else truncated_link
-            )
+            max_title_length = 30
+            title = (title[:max_title_length] + "..." if len(title) > max_title_length else title)
+            truncated_link = ""
 
         final_str.append(f"{i+1}. {truncated_link} - {title}")
 

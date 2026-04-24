@@ -7,26 +7,15 @@ from urllib3.util.retry import Retry
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from constants import USER_AGENTS
 
 import warnings
 warnings.filterwarnings("ignore")
 
-# Define a list of rotating user agents.
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.7; rv:137.0) Gecko/20100101 Firefox/137.0",
-    "Mozilla/5.0 (X11; Linux i686; rv:137.0) Gecko/20100101 Firefox/137.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Safari/605.1.15",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.3179.54",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.3179.54"
-]
-
 MAX_DOWNLOAD_BYTES = 1_000_000
 MAX_EXTRACTED_TEXT_CHARS = 50_000
-MAX_RETURN_CHARS = 2_000
+# Default return limit — overridden per-call via the max_return_chars parameter.
+DEFAULT_MAX_RETURN_CHARS = 2_000
 ALLOWED_CONTENT_TYPES = ("text/html", "application/xhtml+xml", "text/plain")
 _thread_local = threading.local()
 _logger = logging.getLogger(__name__)
@@ -71,11 +60,11 @@ def _get_session(use_tor=False):
         setattr(_thread_local, key, _build_session(use_tor=use_tor))
     return getattr(_thread_local, key)
 
+
 def get_tor_session():
-    """
-    Creates a requests Session with Tor SOCKS proxy and automatic retries.
-    """
+    """Creates a requests Session with Tor SOCKS proxy and automatic retries."""
     return _build_session(use_tor=True)
+
 
 def scrape_single(url_data, rotate=False, rotate_interval=5, control_port=9051, control_password=None):
     """
@@ -101,10 +90,8 @@ def scrape_single(url_data, rotate=False, rotate_interval=5, control_port=9051, 
     try:
         session = _get_session(use_tor=use_tor)
         if use_tor:
-            # Increased timeout for Tor latency
             response = session.get(url, headers=headers, timeout=(10, 45), stream=True)
         else:
-            # Fallback for clearweb if needed, though tool focuses on dark web
             response = session.get(url, headers=headers, timeout=(5, 25), stream=True)
 
         if response.status_code == 200:
@@ -123,20 +110,16 @@ def scrape_single(url_data, rotate=False, rotate_interval=5, control_port=9051, 
                 chunks.append(chunk)
 
             html = b"".join(chunks).decode(response.encoding or "utf-8", errors="replace")
-
             soup = BeautifulSoup(html, "html.parser")
-            # Clean up text: remove scripts/styles
             for script in soup(["script", "style"]):
                 script.extract()
             text = soup.get_text(separator=' ')
-            # Normalize whitespace
             text = ' '.join(text.split())
             text = text[:MAX_EXTRACTED_TEXT_CHARS]
             scraped_text = f"{title} - {text}" if text else title
         else:
             scraped_text = title
     except Exception as exc:
-        # Return title only on failure, so we don't lose the reference
         _logger.debug("Failed to scrape url=%s: %s", url, exc)
         scraped_text = title
     finally:
@@ -145,16 +128,22 @@ def scrape_single(url_data, rotate=False, rotate_interval=5, control_port=9051, 
 
     return url, scraped_text
 
-def scrape_multiple(urls_data, max_workers=5):
+
+def scrape_multiple(urls_data, max_workers=5, max_return_chars=DEFAULT_MAX_RETURN_CHARS):
     """
     Scrapes multiple URLs concurrently using a thread pool.
+
+    Args:
+        urls_data: list of dicts with 'link' and 'title' keys.
+        max_workers: number of concurrent scraping threads.
+        max_return_chars: maximum characters to keep per scraped page.
+                          Controlled by the UI slider (default 2000, up to 10000).
     """
     results = {}
     max_workers = max(1, min(int(max_workers), 16))
     if not isinstance(urls_data, (list, tuple)):
         return results
 
-    # Deduplicate links to reduce unnecessary requests under real workloads.
     unique_urls_data = []
     seen_links = set()
     for item in urls_data:
@@ -174,18 +163,13 @@ def scrape_multiple(urls_data, max_workers=5):
                 url, content = future.result()
                 if not url:
                     continue
-                if len(content) > MAX_RETURN_CHARS:
+                if len(content) > max_return_chars:
                     suffix = "...(truncated)"
-                    if len(suffix) >= MAX_RETURN_CHARS:
-                        # Fallback: ensure we never exceed MAX_RETURN_CHARS even if suffix is long
-                        content = suffix[:MAX_RETURN_CHARS]
-                    else:
-                        available = MAX_RETURN_CHARS - len(suffix)
-                        content = content[:available] + suffix
+                    available = max_return_chars - len(suffix)
+                    content = content[:max(0, available)] + suffix
                 results[url] = content
             except Exception as exc:
                 _logger.debug("Worker failed to scrape a URL: %s", exc)
                 continue
 
     return results
-    

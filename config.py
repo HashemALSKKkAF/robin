@@ -1,3 +1,4 @@
+# config.py - Configuration management for Robin: Loads API keys and settings from .env file with robust cleaning and support for quoted values.
 import os
 from dotenv import load_dotenv
 

@@ -1,4 +1,3 @@
-
 import base64
 import json
 import streamlit as st
@@ -55,7 +54,7 @@ def _render_pipeline_error(stage: str, err: Exception) -> None:
 INVESTIGATIONS_DIR = Path("investigations")
 
 
-def save_investigation(query: str, refined_query: str, model: str, preset_label: str, sources: list, summary: str) -> str:
+def save_investigation(query, refined_query, model, preset_label, sources, summary):
     """Save a completed investigation to disk. Returns the filename."""
     INVESTIGATIONS_DIR.mkdir(exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -73,7 +72,7 @@ def save_investigation(query: str, refined_query: str, model: str, preset_label:
     return fname
 
 
-def load_investigations() -> list:
+def load_investigations():
     """Return list of saved investigations sorted newest-first."""
     if not INVESTIGATIONS_DIR.exists():
         return []
@@ -96,8 +95,8 @@ def cached_search_results(refined_query: str, threads: int):
 
 
 @st.cache_data(ttl=200, show_spinner=False)
-def cached_scrape_multiple(filtered: list, threads: int):
-    return scrape_multiple(filtered, max_workers=threads)
+def cached_scrape_multiple(filtered: list, threads: int, max_content_chars: int):
+    return scrape_multiple(filtered, max_workers=threads, max_return_chars=max_content_chars)
 
 
 # Streamlit page configuration
@@ -107,7 +106,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for styling
 st.markdown(
     """
     <style>
@@ -130,8 +128,11 @@ st.sidebar.markdown(
     """Made by [Apurv Singh Gautam](https://www.linkedin.com/in/apurvsinghgautam/)"""
 )
 st.sidebar.subheader("Settings")
+
+
 def _env_is_set(value) -> bool:
     return bool(value and str(value).strip() and "your_" not in str(value))
+
 
 model_options = get_model_choices()
 default_model_index = (
@@ -160,6 +161,7 @@ model = st.sidebar.selectbox(
 )
 if any(name not in {"gpt4o", "gpt-4.1", "claude-3-5-sonnet-latest", "llama3.1", "gemini-2.5-flash"} for name in model_options):
     st.sidebar.caption("Locally detected Ollama models are automatically added to this list.")
+
 threads = st.sidebar.slider("Scraping Threads", 1, 16, 4, key="thread_slider")
 max_results = st.sidebar.slider(
     "Max Results to Filter", 10, 100, 50, key="max_results_slider",
@@ -168,6 +170,14 @@ max_results = st.sidebar.slider(
 max_scrape = st.sidebar.slider(
     "Max Pages to Scrape", 3, 20, 10, key="max_scrape_slider",
     help="Cap the number of filtered results that get scraped for content.",
+)
+max_content_chars = st.sidebar.slider(
+    "Content Size per Page", 2_000, 10_000, 2_000, step=1_000,
+    key="max_content_chars_slider",
+    help=(
+        "Maximum characters kept from each scraped page before passing to the LLM. "
+        "Higher values give the model more context but increase token usage and cost."
+    ),
 )
 
 st.sidebar.divider()
@@ -225,7 +235,6 @@ with st.sidebar.expander("⚙️ Prompt Settings"):
 st.sidebar.divider()
 st.sidebar.subheader("Health Checks")
 
-# LLM Health Check
 if st.sidebar.button("🔌 Check LLM Connection", use_container_width=True):
     with st.sidebar:
         with st.spinner(f"Testing {model}..."):
@@ -239,7 +248,6 @@ if st.sidebar.button("🔌 Check LLM Connection", use_container_width=True):
                 f"❌ **{result['provider']}** — Failed\n\n{result['error']}"
             )
 
-# Search Engine Health Check
 if st.sidebar.button("🔍 Check Search Engines", use_container_width=True):
     with st.sidebar:
         with st.spinner("Checking Tor proxy..."):
@@ -266,13 +274,9 @@ if st.sidebar.button("🔍 Check Search Engines", use_container_width=True):
 
             for r in engine_results:
                 if r["status"] == "up":
-                    st.sidebar.markdown(
-                        f"&ensp;🟢 **{r['name']}** — {r['latency_ms']}ms"
-                    )
+                    st.sidebar.markdown(f"&ensp;🟢 **{r['name']}** — {r['latency_ms']}ms")
                 else:
-                    st.sidebar.markdown(
-                        f"&ensp;🔴 **{r['name']}** — {r['error']}"
-                    )
+                    st.sidebar.markdown(f"&ensp;🔴 **{r['name']}** — {r['error']}")
 
 # --- Past Investigations ---
 st.sidebar.divider()
@@ -295,12 +299,11 @@ else:
     st.sidebar.caption("No saved investigations yet.")
 
 
-# Main UI - logo and input
+# Main UI
 _, logo_col, _ = st.columns(3)
 with logo_col:
     st.image(".github/assets/robin_logo.png", width=200)
 
-# Display text box and button
 with st.form("search_form", clear_on_submit=True):
     col_input, col_button = st.columns([10, 1])
     query = col_input.text_input(
@@ -330,7 +333,6 @@ if "loaded_investigation" in st.session_state and not run_button:
         del st.session_state["loaded_investigation"]
         st.rerun()
 
-# Status + result section placeholders
 status_slot = st.empty()
 notes_placeholder = st.empty()
 sources_placeholder = st.empty()
@@ -339,12 +341,10 @@ findings_placeholder = st.empty()
 
 # Process the query
 if run_button and query:
-    # Clear any loaded investigation and old pipeline state
     st.session_state.pop("loaded_investigation", None)
     for k in ["refined", "results", "filtered", "scraped", "streamed_summary"]:
         st.session_state.pop(k, None)
 
-    # Stage 1 - Load LLM
     with status_slot.container():
         with st.spinner("🔄 Loading LLM..."):
             try:
@@ -352,7 +352,6 @@ if run_button and query:
             except Exception as e:
                 _render_pipeline_error("load the selected LLM", e)
 
-    # Stage 2 - Refine query
     with status_slot.container():
         with st.spinner("🔄 Refining query..."):
             try:
@@ -360,34 +359,28 @@ if run_button and query:
             except Exception as e:
                 _render_pipeline_error("refine the query", e)
 
-    # Stage 3 - Search dark web
     with status_slot.container():
         with st.spinner("🔍 Searching dark web..."):
             st.session_state.results = cached_search_results(
                 st.session_state.refined, threads
             )
-    # Cap results before LLM filter step
     if len(st.session_state.results) > max_results:
         st.session_state.results = st.session_state.results[:max_results]
 
-    # Stage 4 - Filter results
     with status_slot.container():
         with st.spinner("🗂️ Filtering results..."):
             st.session_state.filtered = filter_results(
                 llm, st.session_state.refined, st.session_state.results
             )
-    # Cap filtered results before scraping
     if len(st.session_state.filtered) > max_scrape:
         st.session_state.filtered = st.session_state.filtered[:max_scrape]
 
-    # Stage 5 - Scrape content
     with status_slot.container():
         with st.spinner("📜 Scraping content..."):
             st.session_state.scraped = cached_scrape_multiple(
-                st.session_state.filtered, threads
+                st.session_state.filtered, threads, max_content_chars
             )
 
-    # Stage 6 - Summarize (streaming)
     st.session_state.streamed_summary = ""
 
     with findings_placeholder.container():
@@ -407,7 +400,6 @@ if run_button and query:
                 preset=selected_preset, custom_instructions=custom_instructions,
             )
 
-    # Save investigation
     _fname = save_investigation(
         query=query,
         refined_query=st.session_state.refined,
@@ -417,7 +409,6 @@ if run_button and query:
         summary=st.session_state.streamed_summary,
     )
 
-    # Render organized sections
     with notes_placeholder.container():
         with st.expander("📋 Notes", expanded=False):
             st.markdown(f"**Refined Query:** `{st.session_state.refined}`")
@@ -425,7 +416,8 @@ if run_button and query:
             st.markdown(
                 f"**Results found:** {len(st.session_state.results)} &nbsp;&nbsp; "
                 f"**Filtered to:** {len(st.session_state.filtered)} &nbsp;&nbsp; "
-                f"**Scraped:** {len(st.session_state.scraped)}"
+                f"**Scraped:** {len(st.session_state.scraped)} &nbsp;&nbsp; "
+                f"**Content size:** {max_content_chars:,} chars/page"
             )
 
     with sources_placeholder.container():

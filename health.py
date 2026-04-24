@@ -1,3 +1,4 @@
+#health.py - Health checks for Tor proxy, LLM connectivity, and search engine availability in Robin OSINT tool.
 import time
 import socket
 import random

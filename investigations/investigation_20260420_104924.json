@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-04-20T10:49:24.743880",
+  "query": "mnemonic PGP fingerprint A3F9 7C2E 5D41 9B8A 6E3D",
+  "refined_query": "PGP fingerprint A3F9 7C2E",
+  "model": "gpt-oss-120b-openrouter",
+  "preset": "\ud83d\udd0d Dark Web Threat Intel",
+  "sources": [
+    {
+      "title": "OnionLand Web Hosting",
+      "link": "http://dwebkjkovsjobzrb45dz6prnlifnapiyp2dba33vcmcsaikr2re4d5qd.onion/"
+    },
+    {
+      "title": "I2P Search",
+      "link": "http://i2poulge3qyo33q4uazlda367okpkczn4rno2vjfetawoghciae6ygad.onion/"
+    },
+    {
+      "title": "http://3bbad7fauom4d6sgppalyqddsqbf5u5p56b5k5uk2zxsy3d6ey2jobad.onion",
+      "link": "http://3bbad7fauom4d6sgppalyqddsqbf5u5p56b5k5uk2zxsy3d6ey2jobad.onion"
+    },
+    {
+      "title": "juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion",
+      "link": "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/"
+    },
+    {
+      "title": "About",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/about"
+    },
+    {
+      "title": "Directory",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/directory"
+    },
+    {
+      "title": "Add Onion Service",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/webmaster"
+    },
+    {
+      "title": "Advertise",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/advertising"
+    },
+    {
+      "title": "Contact",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/contact"
+    },
+    {
+      "title": "Arcadia Marketplace",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=6e588"
+    }
+  ],
+  "summary": "**Input Query:**\u202fmnemonic\u202fPGP\u202ffingerprint\u202fA3F9\u202f7C2E\u202f5D41\u202f9B8A\u202f6E3D  \n\n---\n\n## 1. Source Links Referenced for Analysis\n| # | Onion URL | Relevance |\n|---|-----------|-----------|\n| 1 | `http://dwebkjkovsjobzrb45dz6prnlifnapiyp2dba33vcmcsaikr2re4d5qd.onion/` | OnionLand Web\u2011hosting service \u2013 shows accepted crypto, contact e\u2011mail and PGP key. |\n| 2 | `http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/contact` | \u201cContact\u201d page of the Amnesia search engine \u2013 contains a public PGP key and e\u2011mail address. |\n| 3 | `http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/about` | \u201cAbout\u201d page \u2013 repeats the same PGP key and donation crypto addresses. |\n| 4 | `http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/advertising` | Advertising page \u2013 shows the same e\u2011mail/PGP block, useful for confirming ownership. |\n| 5 | `http://3bbad7fauom4d6sgppalyqddsqbf5u5p56b5k5uk2zxsy3d6ey2jobad.onion` | OnionLand \u201csearch\u201d front\u2011page \u2013 confirms the branding of the hosting provider. |\n| 6 | `http://i2poulge3qyo33q4uazlda367okpkczn4rno2vjfetawoghciae6ygad.onion` | I2P\u2011search page \u2013 cross\u2011references OnionLand as a partner service. |\n| 7 | `http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/` | Ahmia warning page \u2013 not directly related to the PGP fingerprint but shows the ecosystem of search engines. |\n\n---\n\n## 2. Investigation Artifacts  \n\n| Artifact Type | Value | Context / Where Found |\n|---------------|-------|-----------------------|\n| **PGP Public Key (Canary)** | `C1D5 DAB7 106F F6AD D732 D256 5357 908D 4EA4 6E85` | Listed on Amnesia \u201cContact\u201d page (and duplicated on About/Advertising pages). |\n| **PGP Fingerprint (SHA\u20111)** | `A3F9 7C2E 5D41 9B8A 6E3D` *(requested)* | **Not present** in any of the scraped pages. |\n| **E\u2011mail address** | `amnesia.net@tuta.io` | Contact page of Amnesia search engine. |\n| **Cryptocurrency donation addresses** | BTC: `bc1q4qpq4epy04wtp6zlp36s0dcy9ezewhzz4ysgs2`<br>XMR: `83ksQ2cFdLaWdAbUyDkmuA6KMZX2JJGJraNExMijfXMyXDHfdnKarmUZUBjqpFPiTFf6X5vfyVca19bxetKmpLMdM6XKBYe` | About & Advertising pages of Amnesia. |\n| **Service Names** | OnionLand Hosting, Amnesia Search Engine | Appear in multiple pages; both provide Tor\u2011only services. |\n| **Related Domains / Markets** | `arcadia7dymctef4idw4agoluk6ypgezc4wdra3lruxd5um26ockvbad.onion` (Arcadia Marketplace) \u2013 referenced in Amnesia directory. |\n| **Technical Stack (OnionLand)** | LAMP (Linux, Apache, MySQL/MariaDB, PHP) + optional WordPress add\u2011on | Described on the hosting landing page. |\n| **Payment Methods** | BTC (including Lightning), ETH, XMR, USDT, USDC \u2013 \u201cNo third\u2011party processors\u201d | Hosting page. |\n| **Legal Disclaimer** | \u201cNo documents requested, No logs, No trace\u201d | Hosting page \u2013 indicates a \u201cno\u2011KYC\u201d business model. |\n\n---\n\n## 3. Key Insights  \n\n1. **The requested PGP fingerprint (A3F9\u202f7C2E\u202f5D41\u202f9B8A\u202f6E3D) does **not** appear in any of the collected onion pages.**  \n   - The only PGP key disclosed is the **Canary** key `C1D5 DAB7 \u2026 6E85` belonging to the Amnesia search engine. Its fingerprint does **not** match the query, indicating the fingerprint belongs to a different actor or service not indexed in the current dataset.\n\n2. **Amnesia Search Engine publishes a **static, publicly\u2011available PGP key** for secure communication.**  \n   - The key is repeated on multiple pages (Contact, About, Advertising) and is signed with a clear \u201cCanary\u201d label, suggesting it is intended for users to verify authenticity of the service and to encrypt messages (e.g., bug reports, vendor inquiries).  \n\n3. **Both OnionLand Hosting and Amnesia operate a \u201cno\u2011KYC, crypto\u2011only\u201d business model and cross\u2011reference each other.**  \n   - OnionLand\u2019s hosting page lists the same crypto payment options and \u201cno documents\u201d policy as Amnesia\u2019s advertising page, hinting at a possible partnership or shared ownership. This could be a vector for supply\u2011chain compromise (e.g., malicious WordPress plugins hosted on OnionLand used by sites listed on Amnesia).\n\n4. **The e\u2011mail address `amnesia.net@tuta.io` is the sole point of contact for the Amnesia service.**  \n   - Tuta.io is a privacy\u2011focused email provider; the address is likely used for vendor onboarding, abuse reports, and PGP key distribution. Monitoring this address (if ever leaked) could yield further intelligence on the operator\u2019s real\u2011world identity.\n\n5. **Cryptocurrency donation addresses are publicly posted, providing a **blockchain\u2011traceable** foothold.**  \n   - The BTC bech32 address and the XMR address can be monitored for incoming/outgoing transactions. Correlating these flows with known ransomware or illicit\u2011service wallets may reveal links to other threat actors or reveal the financial health of the service.\n\n---\n\n## 4. Next Steps  \n\n| Action | Rationale / Suggested Query |\n|--------|-----------------------------|\n| **Search for the missing fingerprint** | Use the exact fingerprint `A3F9 7C2E 5D41 9B8A 6E3D` on: <br>\u2022\u202fTor search engines (Ahmia, Phobos, Kilos) <br>\u2022\u202fOpen\u2011source PGP key repositories (keys.openpgp.org, SKS keyservers) <br>\u2022\u202fGitHub/GitLab code repositories (search for the fingerprint in commit signatures). |\n| **Validate the Canary PGP key** | Import `C1D5 DAB7 \u2026 6E85` into a PGP client, verify its self\u2011signature, and check for any revocation certificates. This confirms the key is still active and not compromised. |\n| **Blockchain analysis of the listed addresses** | \u2013 Pull transaction history for `bc1q4qpq4...` (BTC) and `83ksQ2cF...` (XMR). <br>\u2013 Look for clustering with known ransomware wallets (e.g., REvil, Conti) or darknet market escrow addresses. |\n| **Passive DNS / SSL certificate monitoring** | Track any TLS certificates or DNS records that resolve to the OnionLand and Amnesia .onion v3 addresses. Sudden changes may indicate a takeover or re\u2011hosting. |\n| **Open\u2011source reconnaissance on the e\u2011mail** | Search for `amnesia.net@tuta.io` in breach dumps, paste sites, or leak forums. Correlate any exposed passwords or PGP\u2011encrypted messages. |\n| **Investigate potential partnership** | Query \u201cOnionLand Hosting\u201d + \u201cAmnesia Search\u201d together on dark\u2011web forums (e.g., Dread, The Hub) to uncover any discussion of joint operations, shared infrastructure, or affiliate programs. |\n| **Monitor for phishing clones** | The Arcadia Marketplace page shows a CAPTCHA warning about phishing. Set up a watchlist for any clones of `arcadia*.onion` that attempt to harvest credentials or crypto. |\n\n---\n\n**Bottom Line:** The specific PGP fingerprint you asked about is **not present** in the current set of onion sites. However, the environment around the query contains a **well\u2011documented PGP Canary key** (C1D5\u202fDAB7\u202f\u2026\u202f6E85) belonging to the Amnesia search engine, along with clear crypto payment channels and a \u201cno\u2011KYC\u201d hosting service (OnionLand). Follow the next\u2011step actions to locate the missing fingerprint elsewhere, and leverage the disclosed crypto addresses and contact information for deeper attribution and financial tracking."
+}

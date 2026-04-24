@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-04-19T12:39:55.665079",
+  "query": "RATs",
+  "refined_query": "RAT malware download",
+  "model": "gpt-oss-120b-openrouter",
+  "preset": "\ud83d\udd0d Dark Web Threat Intel",
+  "sources": [
+    {
+      "title": "Venom Software - Remote Administration Tools",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=267eb"
+    },
+    {
+      "title": "\u25b6 Pathfinder RAT for Android and iOS. \ud83d\udcf2 \ud83c\udd95",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=9j3xs"
+    },
+    {
+      "title": "Mnemonic Group",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=60926"
+    },
+    {
+      "title": "\u2705SOCIAL MEDIA HACKERS & HACKING TOOLS \u2b50\u2b50\u2b50\u2b50\u2b50\u2705",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=95e03"
+    },
+    {
+      "title": "White Rabbit - Hacking Services",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=e459c"
+    },
+    {
+      "title": "\u2261 THE HACKING PROJECT \u2261",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=dr5n8"
+    },
+    {
+      "title": "DARK ARMY HACKING GROUP (HACKING SERVICES)",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=11162"
+    },
+    {
+      "title": "Kevin.SEC",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=567nn"
+    },
+    {
+      "title": "ANONHACKERS - High-end Hacking Services",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=09gfl"
+    },
+    {
+      "title": "[ h4ck3r ] Hacking Services",
+      "link": "http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=weh67"
+    }
+  ],
+  "summary": "**1. Input Query:** RATs  \n\n**2. Source Links Referenced for Analysis**  \n- http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=9j3xs  \n- http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=60926  \n- http://amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion/t?ad=directory&k=267eb  \n\n**3. Investigation Artifacts**  \n\n| Artifact Type | Indicator | Context / Description |\n|---------------|-----------|-----------------------|\n| Malware Name | **Pathfinder RAT** (v2.9.1) | Advertised as a \u201cPowerful HTTP RAT FUD Backdoor Binder\u201d for Android & iOS. Claims full device control (SMS, WhatsApp, camera, location, key\u2011logging, etc.). Marketed by \u201cMnemonic Group\u201d. |\n| Vendor / Group | **Mnemonic Group** | Listed as the developer of Pathfinder RAT. Provides PGP public key (fingerprint: A3F9\u202f7C2E\u202f5D41\u202f9B8A\u202f6E3D / 4F12\u202f8B7C\u202fD9E5\u202f01A4\u202f3B7F). Contact email: mnemonic@tormail.com (XMPP: mnemonic@jxabber.de). |\n| PGP Key | **Mnemonic Group PGP Public Key** (see block in source) | Used for encrypted communications/payments. Fingerprint provided above. |\n| Malware Name | **Venom RAT** (also called \u201cVenom Software\u201d) | Remote Administration Tool with features: HVNC, keylogger, password stealer, registry/command access, anti\u2011AV, persistence modules. Marketed on the same onion site. |\n| Vendor / Group | **Venom Software** | No explicit email, but \u201cContact Us\u201d form implied. Claims \u201cBULLETPROOF VPS/RDP\u201d. |\n| Email Contact | **keyhacker@safe-mail.net** | From the \u201cSocial Media Hackers & Hacking Tools\u201d vendor (not directly RAT\u2011related but part of the same marketplace). |\n| Email Contact | **keemail.me** (e.g., anonhackers@keemail.me, h4ck3r_@keemail.me) | Multiple vendors use keemail.me for hire\u2011a\u2011hacker services; may be used for RAT sales. |\n| Cryptocurrency | **Bitcoin / Monero** (generic) | Payment methods mentioned for several services (e.g., Venom, h4ck3r). No specific wallet addresses disclosed in the excerpts. |\n| Dark\u2011web Marketplace | **amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion** | Central directory hosting multiple hacking service ads, including RAT offerings. |\n| Threat Actor References | **Anonymous, Lizard Squad, LulzSec** | Claimed affiliations by the \u201cSocial Media Hackers & Hacking Tools\u201d vendor \u2013 may be used for social engineering or credibility. |\n\n**4. Key Insights**  \n\n1. **Active Commercial Distribution of Mobile RATs** \u2013 The \u201cPathfinder RAT\u201d is being openly sold on a Tor\u2011hidden marketplace, complete with version number (2.9.1), feature list, and a PGP key for secure communication. This indicates a mature supply\u2011chain for Android/iOS surveillance tools targeting both criminal and possibly state\u2011level actors.  \n\n2. **Mnemonic Group as a Central Actor** \u2013 The same PGP fingerprint and contact details appear across multiple listings (Pathfinder RAT, generic \u201cMnemonic Group\u201d page). This group appears to be a dedicated malware development outfit, offering not only RATs but also rootkits, 0\u2011day exploits, and custom backdoors. Their public key can be used to verify authenticity of future communications or payload signatures.  \n\n3. **Overlap of RAT Offerings with General Hacking Services** \u2013 Vendors advertising \u201cVenom RAT\u201d and \u201cPathfinder RAT\u201d coexist on the same onion directory alongside broader hacking\u2011as\u2011a\u2011service (social media hacks, OSINT, DDoS). This suggests a bundled service model where RATs are sold as part of larger intrusion\u2011as\u2011a\u2011service packages.  \n\n4. **Use of Standard Anonymous Email/PGP Infrastructure** \u2013 Multiple vendors rely on disposable Tor\u2011mail services (safe\u2011mail.net, keemail.me) and publish PGP keys. This pattern aids attribution: any future leaked communications signed with the Mnemonic Group key can be linked back to these listings.  \n\n5. **Potential for Cross\u2011Platform Exploitation** \u2013 Both Pathfinder (mobile) and Venom (Windows/Linux) RATs claim \u201cfully undetectable\u201d capabilities and include modules for privilege escalation, persistence, and data exfiltration. Their advertised features (e.g., \u201cApp Binder\u201d for Android, \u201cHVNC\u201d for Windows) align with known TTPs (T1059, T1055, T1543) used in advanced persistent threats.  \n\n**5. Next Steps**  \n\n| Action | Rationale / Suggested Query |\n|--------|------------------------------|\n| **Collect the full PGP public key** and verify its fingerprint against any observed malicious email or code\u2011signing artifacts. | `mnemonic PGP fingerprint A3F9 7C2E 5D41 9B8A 6E3D` |\n| **Download the advertised Pathfinder RAT sample** (if safe sandbox available) to perform static and dynamic analysis. | Search: `site:amnesia7u5odx5xbwtpnqk3edybgud5bmiagu75bnqx2crntw5kry7ad.onion \"Pathfinder RAT\"` |\n| **Monitor cryptocurrency wallets** linked to the vendors (if any appear in future posts) using blockchain analysis tools. | Query: `Bitcoin address associated with \u201cVenom Software\u201d OR \u201cMnemonic Group\u201d` |\n| **Set up honeypot endpoints** mimicking Android/iOS apps to capture any attempted download of the Pathfinder binder. | Deploy a fake APK/IPA host and log HTTP requests from the onion site. |\n| **Cross\u2011reference IoCs** (file hashes, C2 domains, IPs) from any obtained RAT samples with existing threat intel feeds (e.g., VirusTotal, MISP). | `Pathfinder RAT hash` or `Venom RAT C2` |\n| **Track vendor email addresses** for future leaks or credential dumps. | `keyhacker@safe-mail.net`, `anonhackers@keemail.me`, `h4ck3r_@keemail.me` |\n| **Investigate related forums** for chatter about \u201cApp Binder\u201d or \u201cHVNC\u201d tools to identify potential buyers or additional distribution channels. | Search dark\u2011web forums for \u201cApp Binder\u201d AND \u201cMnemonic Group\u201d. |\n\nThese steps will help validate the existence and capabilities of the advertised RATs, map the threat actor ecosystem around Mnemonic Group and associated vendors, and enable proactive detection of their tools in the wild."
+}
