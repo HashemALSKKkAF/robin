@@ -1,4 +1,6 @@
 import re
+import time
+import logging
 import openai
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -14,7 +16,25 @@ from config import (
     GOOGLE_API_KEY,
     OPENROUTER_API_KEY,
 )
-import logging
+
+# ---------------------------------------------------------------------------
+# Retry configuration
+# ---------------------------------------------------------------------------
+# Number of attempts before giving up on a single LLM chain call.
+LLM_MAX_RETRIES = 3
+# Base delay (seconds) for exponential back-off: 2s → 4s → 8s
+LLM_RETRY_BASE_DELAY = 2
+
+# Exceptions that are safe to retry (transient failures).
+_RETRYABLE_EXCEPTIONS = (
+    openai.RateLimitError,
+    openai.APITimeoutError,
+    openai.APIConnectionError,
+    openai.InternalServerError,   # 5xx from OpenAI-compatible providers
+)
+
+# Batch size for the LLM filter step — keeps each prompt well within context limits.
+FILTER_BATCH_SIZE = 25
 
 
 def get_llm(model_choice):
@@ -30,8 +50,7 @@ def get_llm(model_choice):
     llm_class = config["class"]
     model_specific_params = config["constructor_params"]
 
-    # Create a fresh handler for every LLM instance so pipeline stages
-    # (refine, filter, summarize) never share handler state or ui_callback.
+    # Fresh handler per instance — prevents shared-singleton streaming bugs.
     fresh_handler = BufferedStreamingHandler(buffer_limit=60)
     all_params = {
         **_common_llm_params,
@@ -69,6 +88,51 @@ def _ensure_credentials(model_choice: str, llm_class, model_params: dict) -> Non
             _require(OPENAI_API_KEY, "OPENAI_API_KEY", "OpenAI")
 
 
+# ---------------------------------------------------------------------------
+# Retry wrapper
+# ---------------------------------------------------------------------------
+
+def _invoke_with_retry(chain, inputs: dict, stage: str = "LLM call"):
+    """
+    Invoke a LangChain chain with exponential back-off retry on transient errors.
+
+    Retries on: rate limits, timeouts, connection errors, and 5xx responses.
+    Propagates immediately on any other exception (e.g. auth failures).
+
+    Args:
+        chain:  A LangChain Runnable (prompt | llm | parser).
+        inputs: Variables passed to chain.invoke().
+        stage:  Human-readable label used in log/warning messages.
+
+    Returns:
+        The chain's string output.
+
+    Raises:
+        The last retryable exception if all attempts are exhausted.
+        Any non-retryable exception on first occurrence.
+    """
+    last_exc = None
+    for attempt in range(1, LLM_MAX_RETRIES + 1):
+        try:
+            return chain.invoke(inputs)
+        except _RETRYABLE_EXCEPTIONS as exc:
+            last_exc = exc
+            delay = LLM_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+            logging.warning(
+                "[%s] attempt %d/%d failed (%s: %s) — retrying in %.0fs",
+                stage, attempt, LLM_MAX_RETRIES,
+                type(exc).__name__, str(exc)[:120], delay,
+            )
+            time.sleep(delay)
+        except Exception:
+            raise   # Auth errors, bad requests, etc. — don't retry
+    raise last_exc
+
+
+# ---------------------------------------------------------------------------
+# Pipeline stages
+# ---------------------------------------------------------------------------
+
 def refine_query(llm, user_input):
     system_prompt = """
     You are a Cybercrime Threat Intelligence Expert. Your task is to refine the provided user query that needs to be sent to darkweb search engines. 
@@ -86,58 +150,92 @@ def refine_query(llm, user_input):
         [("system", system_prompt), ("user", "{query}")]
     )
     chain = prompt_template | llm | StrOutputParser()
-    return chain.invoke({"query": user_input})
+    return _invoke_with_retry(chain, {"query": user_input}, stage="refine_query")
 
 
-def filter_results(llm, query, results):
-    if not results:
-        return []
+def _filter_batch(llm, query: str, batch: list, batch_offset: int) -> list:
+    """
+    Ask the LLM to select the most relevant indices from a single batch.
 
+    The batch is a slice of the original results list. batch_offset is the
+    number of items before this slice, used to convert local (1-based within
+    the batch) indices back to global (1-based across all results) indices.
+
+    Returns a list of global 1-based indices.
+    """
     system_prompt = """
     You are a Cybercrime Threat Intelligence Expert. You are given a dark web search query and a list of search results in the form of index, link and title. 
-    Your task is select the Top 20 relevant results that best match the search query for user to investigate more.
+    Your task is to select the Top 10 relevant results that best match the search query for further investigation.
     Rule:
-    1. Output ONLY atmost top 20 indices (comma-separated list) no more than that that best match the input query
+    1. Output ONLY the indices (comma-separated list), no more than 10, that best match the input query.
 
     Search Query: {query}
     Search Results:
     """
-
-    final_str = _generate_final_string(results)
-
+    final_str = _generate_final_string(batch)
     prompt_template = ChatPromptTemplate(
         [("system", system_prompt), ("user", "{results}")]
     )
     chain = prompt_template | llm | StrOutputParser()
-    try:
-        result_indices = chain.invoke({"query": query, "results": final_str})
-    except openai.RateLimitError as e:
-        print(f"Rate limit error: {e} \n Truncating to Web titles only with 30 characters")
-        final_str = _generate_final_string(results, truncate=True)
-        result_indices = chain.invoke({"query": query, "results": final_str})
 
-    parsed_indices = []
-    for match in re.findall(r"\d+", result_indices):
+    try:
+        raw = _invoke_with_retry(chain, {"query": query, "results": final_str}, stage="filter_batch")
+    except openai.RateLimitError:
+        # Last-resort fallback: truncated titles only to minimise token use.
+        final_str = _generate_final_string(batch, truncate=True)
+        raw = _invoke_with_retry(
+            chain, {"query": query, "results": final_str}, stage="filter_batch_truncated"
+        )
+
+    # Parse local indices (1-based within this batch) and convert to global.
+    parsed = []
+    for match in re.findall(r"\d+", raw):
         try:
-            idx = int(match)
-            if 1 <= idx <= len(results):
-                parsed_indices.append(idx)
+            local_idx = int(match)
+            if 1 <= local_idx <= len(batch):
+                global_idx = batch_offset + local_idx  # 1-based global
+                parsed.append(global_idx)
         except ValueError:
             continue
 
-    seen = set()
-    parsed_indices = [i for i in parsed_indices if not (i in seen or seen.add(i))]
+    return parsed
 
-    if not parsed_indices:
+
+def filter_results(llm, query: str, results: list) -> list:
+    """
+    Filter search results down to the top 20 most relevant entries.
+
+    Results are processed in batches of FILTER_BATCH_SIZE (default 25) so that
+    each LLM prompt stays well within context limits. Each batch independently
+    selects up to 10 candidates; the combined candidates are de-duplicated and
+    capped at 20.
+    """
+    if not results:
+        return []
+
+    all_selected_indices = []
+
+    for batch_start in range(0, len(results), FILTER_BATCH_SIZE):
+        batch = results[batch_start: batch_start + FILTER_BATCH_SIZE]
+        selected = _filter_batch(llm, query, batch, batch_offset=batch_start)
+        all_selected_indices.extend(selected)
+
+    # De-duplicate while preserving order.
+    seen: set = set()
+    unique_indices = [i for i in all_selected_indices if not (i in seen or seen.add(i))]
+
+    if not unique_indices:
+        num_batches = (len(results) + FILTER_BATCH_SIZE - 1) // FILTER_BATCH_SIZE
         logging.warning(
-            "Unable to interpret LLM result selection ('%s'). "
-            "Defaulting to the top %s results.",
-            result_indices,
+            "filter_results: LLM returned no usable indices across %d batch(es). "
+            "Defaulting to top %d results.",
+            num_batches,
             min(len(results), 20),
         )
-        parsed_indices = list(range(1, min(len(results), 20) + 1))
+        unique_indices = list(range(1, min(len(results), 20) + 1))
 
-    return [results[i - 1] for i in parsed_indices[:20]]
+    # Cap at 20 and convert to 0-based for list indexing.
+    return [results[i - 1] for i in unique_indices[:20]]
 
 
 def _generate_final_string(results, truncate=False):
@@ -275,4 +373,4 @@ def generate_summary(llm, query, content, preset="threat_intel", custom_instruct
         [("system", system_prompt), ("user", "{content}")]
     )
     chain = prompt_template | llm | StrOutputParser()
-    return chain.invoke({"query": query, "content": content})
+    return _invoke_with_retry(chain, {"query": query, "content": content}, stage="generate_summary")
