@@ -7,6 +7,8 @@ from scrape import scrape_multiple
 from search import get_search_results
 from llm_utils import BufferedStreamingHandler, get_model_choices
 from llm import get_llm, refine_query, filter_results, generate_summary, PRESET_PROMPTS
+from tor_utils import refresh_tor_circuit, get_tor_exit_ip
+from scrape import get_tor_session
 from config import (
     OPENAI_API_KEY,
     ANTHROPIC_API_KEY,
@@ -49,7 +51,6 @@ INVESTIGATIONS_DIR = Path("investigations")
 
 
 def save_investigation(query, refined_query, model, preset_label, sources, summary):
-    """Save a completed investigation to disk. Returns the filename."""
     INVESTIGATIONS_DIR.mkdir(exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     fname = f"investigation_{timestamp}.json"
@@ -67,7 +68,6 @@ def save_investigation(query, refined_query, model, preset_label, sources, summa
 
 
 def load_investigations():
-    """Return list of saved investigations sorted newest-first."""
     if not INVESTIGATIONS_DIR.exists():
         return []
     files = sorted(INVESTIGATIONS_DIR.glob("investigation_*.json"), reverse=True)
@@ -97,7 +97,7 @@ def cached_scrape_multiple(filtered: list, threads: int, max_content_chars: int)
 
 
 # ---------------------------------------------------------------------------
-# Streamlit page configuration
+# Page config
 # ---------------------------------------------------------------------------
 
 st.set_page_config(
@@ -122,7 +122,7 @@ st.markdown(
 
 
 # ---------------------------------------------------------------------------
-# Sidebar
+# Sidebar — Settings
 # ---------------------------------------------------------------------------
 
 st.sidebar.title("Robin")
@@ -168,10 +168,7 @@ max_scrape = st.sidebar.slider(
 max_content_chars = st.sidebar.slider(
     "Content Size per Page", 2_000, 10_000, 2_000, step=1_000,
     key="max_content_chars_slider",
-    help=(
-        "Maximum characters kept from each scraped page before passing to the LLM. "
-        "Higher values give more context but increase token usage and cost."
-    ),
+    help="Maximum characters kept per scraped page. Higher = more context, more tokens.",
 )
 
 st.sidebar.divider()
@@ -223,7 +220,10 @@ with st.sidebar.expander("⚙️ Prompt Settings"):
         key="custom_instructions",
     )
 
-# --- Health Checks ---
+# ---------------------------------------------------------------------------
+# Sidebar — Health Checks
+# ---------------------------------------------------------------------------
+
 st.sidebar.divider()
 st.sidebar.subheader("Health Checks")
 
@@ -263,7 +263,34 @@ if st.sidebar.button("🔍 Check Search Engines", use_container_width=True):
                 else:
                     st.sidebar.markdown(f"&ensp;🔴 **{r['name']}** — {r['error']}")
 
-# --- Past Investigations ---
+# --- Tor Circuit Refresh ---
+if st.sidebar.button("🔄 Refresh Tor Circuit", use_container_width=True, help=(
+    "Requests a new Tor circuit (NEWNYM signal) so subsequent searches use a "
+    "different exit node. Requires ControlPort 9051 in your torrc."
+)):
+    with st.sidebar:
+        with st.spinner("Requesting new Tor circuit..."):
+            result = refresh_tor_circuit()
+        if result["status"] == "ok":
+            # Try to show the new exit IP as confirmation
+            try:
+                session = get_tor_session()
+                new_ip = get_tor_exit_ip(session)
+            except Exception:
+                new_ip = None
+            ip_line = f"\n\nNew exit IP: `{new_ip}`" if new_ip else ""
+            st.sidebar.success(f"✅ {result['message']}{ip_line}")
+        else:
+            st.sidebar.error(
+                f"❌ Circuit refresh failed\n\n{result['message']}\n\n"
+                "To enable: add `ControlPort 9051` to your torrc and restart Tor. "
+                "For Docker, ensure port 9051 is not blocked inside the container."
+            )
+
+# ---------------------------------------------------------------------------
+# Sidebar — Past Investigations
+# ---------------------------------------------------------------------------
+
 st.sidebar.divider()
 st.sidebar.subheader("📂 Past Investigations")
 saved_investigations = load_investigations()
@@ -302,7 +329,7 @@ with st.form("search_form", clear_on_submit=True):
     )
     run_button = col_button.form_submit_button("Run")
 
-# Display loaded investigation (if any)
+# Display loaded investigation
 if "loaded_investigation" in st.session_state and not run_button:
     inv = st.session_state["loaded_investigation"]
     st.info(f"📂 **{inv['query']}** — {inv['timestamp'][:16]}")
@@ -319,7 +346,6 @@ if "loaded_investigation" in st.session_state and not run_button:
         del st.session_state["loaded_investigation"]
         st.rerun()
 
-# Placeholder slots rendered in order
 status_slot = st.empty()
 notes_placeholder = st.empty()
 sources_placeholder = st.empty()
@@ -327,11 +353,10 @@ findings_placeholder = st.empty()
 
 
 # ---------------------------------------------------------------------------
-# Helper: render summary section (shared by full run and re-summarize)
+# Shared helpers
 # ---------------------------------------------------------------------------
 
 def _render_findings(summary_text: str, filtered: list, query_text: str):
-    """Render the findings expander and download link."""
     with findings_placeholder.container():
         st.subheader(":red[🔎 Findings]", anchor=None, divider="gray")
         st.markdown(summary_text)
@@ -346,7 +371,6 @@ def _render_findings(summary_text: str, filtered: list, query_text: str):
 
 
 def _run_summary_stage(llm, query_text, scraped, preset, custom_instr, summary_slot):
-    """Stream the summary into summary_slot and return the full text."""
     streamed = {"text": ""}
 
     def ui_emit(chunk: str):
@@ -368,7 +392,6 @@ if run_button and query:
     for k in ["refined", "results", "filtered", "scraped", "streamed_summary"]:
         st.session_state.pop(k, None)
 
-    # Stage 1 — Load LLM
     with status_slot.container():
         with st.spinner("🔄 Loading LLM..."):
             try:
@@ -376,7 +399,6 @@ if run_button and query:
             except Exception as e:
                 _render_pipeline_error("load the selected LLM", e)
 
-    # Stage 2 — Refine query
     with status_slot.container():
         with st.spinner("🔄 Refining query..."):
             try:
@@ -384,14 +406,12 @@ if run_button and query:
             except Exception as e:
                 _render_pipeline_error("refine the query", e)
 
-    # Stage 3 — Search dark web
     with status_slot.container():
-        with st.spinner("🔍 Searching dark web..."):
+        with st.spinner("🔍 Searching dark web (results pre-scored by keyword relevance)..."):
             st.session_state.results = cached_search_results(st.session_state.refined, threads)
     if len(st.session_state.results) > max_results:
         st.session_state.results = st.session_state.results[:max_results]
 
-    # Stage 4 — Filter results (batched)
     with status_slot.container():
         num_batches = (len(st.session_state.results) + 24) // 25
         with st.spinner(f"🗂️ Filtering results ({num_batches} batch{'es' if num_batches > 1 else ''})..."):
@@ -401,14 +421,12 @@ if run_button and query:
     if len(st.session_state.filtered) > max_scrape:
         st.session_state.filtered = st.session_state.filtered[:max_scrape]
 
-    # Stage 5 — Scrape content
     with status_slot.container():
         with st.spinner("📜 Scraping content..."):
             st.session_state.scraped = cached_scrape_multiple(
                 st.session_state.filtered, threads, max_content_chars
             )
 
-    # Stage 6 — Streaming summary
     with findings_placeholder.container():
         st.subheader(":red[🔎 Findings]", anchor=None, divider="gray")
         summary_slot = st.empty()
@@ -420,7 +438,6 @@ if run_button and query:
                 selected_preset, custom_instructions, summary_slot,
             )
 
-    # Save investigation
     _fname = save_investigation(
         query=query,
         refined_query=st.session_state.refined,
@@ -430,7 +447,6 @@ if run_button and query:
         summary=st.session_state.streamed_summary,
     )
 
-    # Render notes
     with notes_placeholder.container():
         with st.expander("📋 Notes", expanded=False):
             st.markdown(f"**Refined Query:** `{st.session_state.refined}`")
@@ -442,23 +458,19 @@ if run_button and query:
                 f"**Content size:** {max_content_chars:,} chars/page"
             )
 
-    # Render sources
     with sources_placeholder.container():
         with st.expander(f"🔗 Sources ({len(st.session_state.filtered)} results)", expanded=False):
             for i, item in enumerate(st.session_state.filtered, 1):
                 st.markdown(f"{i}. [{item.get('title', 'Untitled')}]({item.get('link', '')})")
 
-    # Re-render findings with download link
     _render_findings(st.session_state.streamed_summary, st.session_state.filtered, query)
-
     status_slot.success(f"✔️ Pipeline completed! Investigation saved as `{_fname}`")
 
 
 # ---------------------------------------------------------------------------
-# Re-summarize (skips search + scrape, reuses cached data)
+# Re-summarize (reuses cached scraped data)
 # ---------------------------------------------------------------------------
 
-# Show the Re-summarize button only when scraped data is already in session.
 if st.session_state.get("scraped") and not run_button:
     st.divider()
     st.caption(
@@ -479,7 +491,6 @@ if st.session_state.get("scraped") and not run_button:
                 except Exception as e:
                     _render_pipeline_error("load the selected LLM", e)
 
-        # Re-use the original query stored in session state.
         original_query = st.session_state.get("refined", "")
 
         with findings_placeholder.container():
@@ -493,7 +504,6 @@ if st.session_state.get("scraped") and not run_button:
                     selected_preset, custom_instructions, summary_slot,
                 )
 
-        # Save the re-generated version as a new investigation file.
         _fname = save_investigation(
             query=original_query,
             refined_query=st.session_state.get("refined", original_query),
