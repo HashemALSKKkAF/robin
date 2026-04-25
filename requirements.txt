@@ -1,6 +1,7 @@
 bs4
 pysocks
 requests
+reportlab
 streamlit
 python-dotenv
 langchain-openai
