@@ -10,6 +10,8 @@ from tor_utils import refresh_tor_circuit, get_tor_exit_ip
 from scrape import get_tor_session
 from export import generate_pdf
 import investigations as inv_db
+import seeds as seed_db
+from crawler import crawl_sources, crawl_url, probe_tier
 from config import (
     OPENAI_API_KEY,
     ANTHROPIC_API_KEY,
@@ -23,27 +25,19 @@ from health import check_llm_health, check_search_engines, check_tor_proxy
 
 
 # ---------------------------------------------------------------------------
-# Startup validation — warn about bad keys before anything else runs
+# Startup validation
 # ---------------------------------------------------------------------------
 
 def _validate_config() -> list:
-    """
-    Return a list of warning strings for obviously misconfigured values.
-    Does not hard-stop the app — just surfaces issues early.
-    """
     warnings = []
-
     def _check(name, value, prefix):
         if not value:
             return
         v = str(value).strip()
         if v.startswith("your_") or v.startswith(prefix + "_"):
-            warnings.append(f"**{name}** looks like a placeholder value — double-check your `.env`.")
+            warnings.append(f"**{name}** looks like a placeholder — double-check your `.env`.")
         if len(v) < 20 and "KEY" in name:
             warnings.append(f"**{name}** seems too short to be a valid API key.")
-        if v != value:  # leading/trailing whitespace survived _clean_env
-            warnings.append(f"**{name}** has surrounding whitespace — this will cause auth failures.")
-
     _check("OPENAI_API_KEY",     OPENAI_API_KEY,     "sk")
     _check("ANTHROPIC_API_KEY",  ANTHROPIC_API_KEY,  "sk-ant")
     _check("GOOGLE_API_KEY",     GOOGLE_API_KEY,     "AIza")
@@ -51,17 +45,13 @@ def _validate_config() -> list:
     return warnings
 
 
-# ---------------------------------------------------------------------------
-# Error display helper
-# ---------------------------------------------------------------------------
-
 def _render_pipeline_error(stage: str, err: Exception) -> None:
     message = str(err).strip() or err.__class__.__name__
     lower_msg = message.lower()
     hints = [
-        "- Confirm the relevant API key is set in your `.env` or shell before launching Streamlit.",
-        "- Keys copied from dashboards often include hidden spaces; re-copy if authentication keeps failing.",
-        "- Restart the app after updating environment variables so the new values are picked up.",
+        "- Confirm the relevant API key is set in your `.env` before launching.",
+        "- Keys copied from dashboards often include hidden spaces — re-copy if auth keeps failing.",
+        "- Restart the app after updating environment variables.",
     ]
     if any(t in lower_msg for t in ("anthropic", "x-api-key", "invalid api key", "authentication")):
         hints.insert(0, "- Claude/Anthropic models require a valid `ANTHROPIC_API_KEY`.")
@@ -101,18 +91,17 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    .aStyle {
-        font-size: 18px; font-weight: bold;
-        padding: 5px 0; text-align: left;
+    .aStyle { font-size:18px; font-weight:bold; padding:5px 0; text-align:left; }
+    .deep-crawl-box {
+        border: 1px solid #444; border-radius: 8px;
+        padding: 12px 16px; margin-top: 10px; background: #111;
     }
 </style>""", unsafe_allow_html=True)
 
-# Run startup validation once per session
 if "startup_warnings" not in st.session_state:
     st.session_state.startup_warnings = _validate_config()
-
 if st.session_state.startup_warnings:
-    with st.expander("⚠️ Configuration warnings — expand to review", expanded=False):
+    with st.expander("⚠️ Configuration warnings", expanded=False):
         for w in st.session_state.startup_warnings:
             st.warning(w)
 
@@ -127,38 +116,26 @@ st.sidebar.markdown("Made by [Apurv Singh Gautam](https://www.linkedin.com/in/ap
 st.sidebar.subheader("Settings")
 
 
-def _env_is_set(value) -> bool:
-    return bool(value and str(value).strip() and "your_" not in str(value))
+def _env_is_set(v) -> bool:
+    return bool(v and str(v).strip() and "your_" not in str(v))
 
 
 model_options = get_model_choices()
-default_model_index = (
-    next((i for i, n in enumerate(model_options) if n.lower() == "gpt4o"), 0)
-    if model_options else 0
-)
-
 if not model_options:
-    st.sidebar.error(
-        "⛔ **No LLM models available.**\n\n"
-        "No API keys or local providers are configured. "
-        "Set at least one in your `.env` file and restart Robin."
-    )
+    st.sidebar.error("⛔ No LLM models available. Set at least one API key in `.env` and restart.")
     st.stop()
 
-model = st.sidebar.selectbox(
-    "Select LLM Model", model_options, index=default_model_index, key="model_select"
-)
-if any(n not in {"gpt4o","gpt-4.1","claude-3-5-sonnet-latest","llama3.1","gemini-2.5-flash"} for n in model_options):
-    st.sidebar.caption("Locally detected Ollama models are automatically added to this list.")
+default_model_index = next((i for i, n in enumerate(model_options) if n.lower() == "gpt4o"), 0)
+model = st.sidebar.selectbox("Select LLM Model", model_options, index=default_model_index, key="model_select")
 
-threads          = st.sidebar.slider("Scraping Threads", 1, 16, 4, key="thread_slider")
-max_results      = st.sidebar.slider("Max Results to Filter", 10, 100, 50, key="max_results_slider",
-                       help="Cap raw results sent to the LLM filter step.")
-max_scrape       = st.sidebar.slider("Max Pages to Scrape", 3, 20, 10, key="max_scrape_slider",
-                       help="Cap filtered results that get scraped.")
+threads           = st.sidebar.slider("Scraping Threads", 1, 16, 4, key="thread_slider")
+max_results       = st.sidebar.slider("Max Results to Filter", 10, 100, 50, key="max_results_slider",
+                        help="Cap raw results sent to the LLM filter step.")
+max_scrape        = st.sidebar.slider("Max Pages to Scrape", 3, 20, 10, key="max_scrape_slider",
+                        help="Cap filtered results that get scraped.")
 max_content_chars = st.sidebar.slider("Content Size per Page", 2_000, 10_000, 2_000, step=1_000,
-                       key="max_content_chars_slider",
-                       help="Max chars kept per scraped page. Higher = more context, more tokens.")
+                        key="max_content_chars_slider",
+                        help="Max chars kept per scraped page.")
 
 st.sidebar.divider()
 st.sidebar.subheader("Provider Configuration")
@@ -179,16 +156,16 @@ for name, value, is_cloud in [
 
 with st.sidebar.expander("⚙️ Prompt Settings"):
     preset_options = {
-        "🔍 Dark Web Threat Intel":          "threat_intel",
-        "🦠 Ransomware / Malware Focus":      "ransomware_malware",
-        "👤 Personal / Identity Investigation":"personal_identity",
-        "🏢 Corporate Espionage / Data Leaks": "corporate_espionage",
+        "🔍 Dark Web Threat Intel":           "threat_intel",
+        "🦠 Ransomware / Malware Focus":       "ransomware_malware",
+        "👤 Personal / Identity Investigation": "personal_identity",
+        "🏢 Corporate Espionage / Data Leaks":  "corporate_espionage",
     }
     preset_placeholders = {
         "threat_intel":       "e.g. Pay extra attention to cryptocurrency wallet addresses.",
         "ransomware_malware": "e.g. Highlight double-extortion tactics or RaaS affiliates.",
         "personal_identity":  "e.g. Flag passport numbers and note country of origin.",
-        "corporate_espionage":"e.g. Prioritize source code repos, API keys, internal Slack dumps.",
+        "corporate_espionage":"e.g. Prioritize source code repos, API keys, Slack dumps.",
     }
     selected_preset_label = st.selectbox("Research Domain", list(preset_options.keys()), key="preset_select")
     selected_preset       = preset_options[selected_preset_label]
@@ -218,28 +195,25 @@ if st.sidebar.button("🔍 Check Search Engines", use_container_width=True):
     with st.sidebar, st.spinner("Checking Tor proxy..."):
         tor_result = check_tor_proxy()
     if tor_result["status"] == "down":
-        st.sidebar.error(
-            f"❌ **Tor Proxy** — Not reachable\n\n{tor_result['error']}\n\n"
-            "Ensure Tor is running: `sudo systemctl start tor`"
-        )
+        st.sidebar.error(f"❌ **Tor Proxy** — Not reachable\n\n{tor_result['error']}")
     else:
         st.sidebar.success(f"✅ **Tor Proxy** — Connected ({tor_result['latency_ms']}ms)")
-        with st.sidebar, st.spinner("Pinging 16 search engines via Tor..."):
+        with st.sidebar, st.spinner("Pinging search engines..."):
             engine_results = check_search_engines()
         up_count = sum(1 for r in engine_results if r["status"] == "up")
         total    = len(engine_results)
-        label    = f"✅ **All {total} engines reachable**" if up_count == total else \
-                   f"⚠️ **{up_count}/{total} engines reachable**" if up_count else \
-                   f"❌ **0/{total} engines reachable**"
+        lbl = (f"✅ **All {total} engines reachable**" if up_count == total else
+               f"⚠️ **{up_count}/{total} engines reachable**" if up_count else
+               f"❌ **0/{total} engines reachable**")
         (st.sidebar.success if up_count == total else
-         st.sidebar.warning if up_count else st.sidebar.error)(label)
+         st.sidebar.warning if up_count else st.sidebar.error)(lbl)
         for r in engine_results:
-            icon = "🟢" if r["status"] == "up" else "🔴"
+            icon   = "🟢" if r["status"] == "up" else "🔴"
             detail = f"{r['latency_ms']}ms" if r["status"] == "up" else r["error"]
             st.sidebar.markdown(f"&ensp;{icon} **{r['name']}** — {detail}")
 
 if st.sidebar.button("🔄 Refresh Tor Circuit", use_container_width=True,
-                     help="Send NEWNYM signal to rotate exit node. Requires ControlPort 9051 in torrc."):
+                     help="Send NEWNYM signal. Requires ControlPort 9051 in torrc."):
     with st.sidebar, st.spinner("Requesting new Tor circuit..."):
         result = refresh_tor_circuit()
     if result["status"] == "ok":
@@ -250,20 +224,51 @@ if st.sidebar.button("🔄 Refresh Tor Circuit", use_container_width=True,
         ip_line = f"\n\nNew exit IP: `{new_ip}`" if new_ip else ""
         st.sidebar.success(f"✅ {result['message']}{ip_line}")
     else:
-        st.sidebar.error(
-            f"❌ Circuit refresh failed\n\n{result['message']}\n\n"
-            "Add `ControlPort 9051` to your torrc and restart Tor."
-        )
+        st.sidebar.error(f"❌ Circuit refresh failed\n\n{result['message']}")
 
 
 # ---------------------------------------------------------------------------
-# Sidebar — Past Investigations (SQLite-powered)
+# Sidebar — Seed Manager
+# ---------------------------------------------------------------------------
+
+st.sidebar.divider()
+with st.sidebar.expander("🌱 Seed Manager", expanded=False):
+    st.caption("Add .onion URLs to the seed list for future deep crawling.")
+
+    with st.form("add_seed_form", clear_on_submit=True):
+        new_url  = st.text_input("URL", placeholder="http://example.onion")
+        new_name = st.text_input("Label (optional)")
+        if st.form_submit_button("➕ Add Seed"):
+            if new_url.strip():
+                try:
+                    seed_db.add_seed(new_url.strip(), new_name.strip())
+                    st.success("Seed added.")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+            else:
+                st.warning("Please enter a URL.")
+
+    all_seeds = seed_db.get_all_seeds()
+    if all_seeds:
+        st.caption(f"**{len(all_seeds)} seeds** in store")
+        for s in all_seeds[:10]:
+            crawled = "✅" if s["crawled"] else "⏳"
+            loaded  = "📄" if s["loaded"]  else "—"
+            st.markdown(
+                f"{crawled}{loaded} `{s['url'][:40]}{'…' if len(s['url'])>40 else ''}`"
+            )
+        if len(all_seeds) > 10:
+            st.caption(f"… and {len(all_seeds)-10} more")
+    else:
+        st.caption("No seeds yet.")
+
+
+# ---------------------------------------------------------------------------
+# Sidebar — Past Investigations
 # ---------------------------------------------------------------------------
 
 st.sidebar.divider()
 st.sidebar.subheader("📂 Past Investigations")
-
-# Filters
 all_tags      = inv_db.get_all_tags()
 filter_status = st.sidebar.selectbox("Filter by status", ["all"] + list(inv_db.VALID_STATUSES), key="filter_status")
 filter_tag    = st.sidebar.selectbox("Filter by tag", ["all"] + all_tags, key="filter_tag") if all_tags else "all"
@@ -298,86 +303,10 @@ with logo_col:
 
 with st.form("search_form", clear_on_submit=True):
     col_input, col_button = st.columns([10, 1])
-    query      = col_input.text_input("Enter Dark Web Search Query", placeholder="Enter Dark Web Search Query",
+    query      = col_input.text_input("Enter Dark Web Search Query",
+                                       placeholder="Enter Dark Web Search Query",
                                        label_visibility="collapsed", key="query_input")
     run_button = col_button.form_submit_button("Run")
-
-
-# ---------------------------------------------------------------------------
-# Loaded investigation view
-# ---------------------------------------------------------------------------
-
-if "loaded_investigation" in st.session_state and not run_button:
-    inv = st.session_state["loaded_investigation"]
-    inv_id = inv.get("id")
-
-    st.info(f"📂 **{inv['query']}** — {inv['timestamp'][:16]}")
-
-    # Meta + edit controls
-    with st.expander("📋 Notes & Management", expanded=False):
-        st.markdown(f"**Refined Query:** `{inv.get('refined_query','')}`")
-        st.markdown(f"**Model:** `{inv.get('model','')}` &nbsp;&nbsp; **Domain:** {inv.get('preset','')}")
-        st.markdown(f"**Sources:** {len(inv['sources'])}")
-
-        col_s, col_t = st.columns(2)
-        with col_s:
-            new_status = st.selectbox("Status", inv_db.VALID_STATUSES,
-                                       index=list(inv_db.VALID_STATUSES).index(inv.get("status","active")),
-                                       key="edit_status")
-        with col_t:
-            new_tags = st.text_input("Tags (comma-separated)", value=inv.get("tags",""), key="edit_tags")
-
-        if st.button("💾 Save changes", key="save_meta_btn"):
-            inv_db.update_status(inv_id, new_status)
-            inv_db.update_tags(inv_id, new_tags)
-            st.success("Status and tags updated.")
-            st.session_state["loaded_investigation"] = inv_db.load_one(inv_id)
-            st.rerun()
-
-        if st.button("🗑️ Delete investigation", key="delete_inv_btn", type="secondary"):
-            inv_db.delete_investigation(inv_id)
-            del st.session_state["loaded_investigation"]
-            st.rerun()
-
-    with st.expander(f"🔗 Sources ({len(inv['sources'])} results)", expanded=False):
-        for i, item in enumerate(inv["sources"], 1):
-            st.markdown(f"{i}. [{item.get('title','Untitled')}]({item.get('link','')})")
-
-    st.subheader(":red[🔎 Findings]", anchor=None, divider="gray")
-    st.markdown(inv["summary"])
-
-    # PDF export for loaded investigation
-    col_md, col_pdf = st.columns(2)
-    with col_md:
-        b64 = base64.b64encode(inv["summary"].encode()).decode()
-        st.markdown(
-            f'<div class="aStyle">📥 <a href="data:file/markdown;base64,{b64}" '
-            f'download="summary_{inv["timestamp"][:10]}.md">Download Markdown</a></div>',
-            unsafe_allow_html=True,
-        )
-    with col_pdf:
-        pdf_bytes = generate_pdf(inv)
-        st.download_button(
-            "📄 Download PDF Report",
-            data=pdf_bytes,
-            file_name=f"robin_investigation_{inv['timestamp'][:10]}.pdf",
-            mime="application/pdf",
-            key="pdf_dl_loaded",
-        )
-
-    if st.button("✖ Clear"):
-        del st.session_state["loaded_investigation"]
-        st.rerun()
-
-
-# ---------------------------------------------------------------------------
-# Pipeline placeholders
-# ---------------------------------------------------------------------------
-
-status_slot         = st.empty()
-notes_placeholder   = st.empty()
-sources_placeholder = st.empty()
-findings_placeholder = st.empty()
 
 
 # ---------------------------------------------------------------------------
@@ -385,11 +314,10 @@ findings_placeholder = st.empty()
 # ---------------------------------------------------------------------------
 
 def _render_findings(summary_text: str, inv_dict: dict):
-    """Render findings section with both Markdown and PDF download buttons."""
+    """Render findings with Markdown + PDF download buttons."""
     with findings_placeholder.container():
         st.subheader(":red[🔎 Findings]", anchor=None, divider="gray")
         st.markdown(summary_text)
-
         col_md, col_pdf = st.columns(2)
         now = datetime.now().strftime("%Y-%m-%d")
         with col_md:
@@ -402,30 +330,228 @@ def _render_findings(summary_text: str, inv_dict: dict):
         with col_pdf:
             pdf_bytes = generate_pdf(inv_dict)
             st.download_button(
-                "📄 Download PDF Report",
-                data=pdf_bytes,
+                "📄 Download PDF Report", data=pdf_bytes,
                 file_name=f"robin_investigation_{now}.pdf",
                 mime="application/pdf",
-                key=f"pdf_dl_{now}_{hash(summary_text) % 99999}",
+                key=f"pdf_dl_{now}_{abs(hash(summary_text)) % 99999}",
             )
 
 
 def _run_summary_stage(llm, query_text, scraped, preset, custom_instr, summary_slot):
-    """Stream the LLM summary into summary_slot and return the full accumulated text."""
+    """Stream LLM summary into summary_slot, return full accumulated text."""
     streamed = {"text": ""}
-
     def ui_emit(chunk: str):
         streamed["text"] += chunk
         summary_slot.markdown(streamed["text"])
-
     stream_handler = BufferedStreamingHandler(ui_callback=ui_emit)
     llm.callbacks  = [stream_handler]
     generate_summary(llm, query_text, scraped, preset=preset, custom_instructions=custom_instr)
     return streamed["text"]
 
 
+def _deep_crawl_sources_section(
+    sources: list,
+    scraped_key: str,
+    query_text: str,
+    section_label: str = "sources",
+):
+    """
+    Render the deep crawl UI block below a sources list.
+    - Shows the crawl tier detected (Selenium vs requests).
+    - Lets the user crawl individual sources or all at once.
+    - On completion, re-runs the LLM summary with deep-crawled content
+      merged into the existing scraped data and re-renders findings.
+
+    Args:
+        sources:      List of {"link":..., "title":...} dicts.
+        scraped_key:  session_state key holding the existing scraped dict
+                      (so we can merge deep content into it).
+        query_text:   Query used for the summary stage.
+        section_label: Display label for messages.
+    """
+    tier = probe_tier()
+    tier_label = (
+        "🦊 **Tier 1 — Tor Browser** (full JS rendering)"
+        if tier == "selenium"
+        else "🌐 **Tier 2 — requests + SOCKS** (lightweight fallback)"
+    )
+
+    st.markdown(f"**Deep Crawl available** &nbsp;|&nbsp; {tier_label}")
+    if tier == "requests":
+        st.caption(
+            "Tor Browser + geckodriver not detected. Using fast requests-based crawl. "
+            "Set `TORBROWSER_BINARY` env var and install geckodriver to enable Tier 1."
+        )
+
+    # Per-source crawl buttons
+    with st.expander(f"🔗 Crawl individual {section_label}", expanded=False):
+        for i, src in enumerate(sources):
+            url   = src.get("link", "")
+            title = src.get("title", "Untitled")
+            if not url:
+                continue
+            col_lbl, col_btn = st.columns([8, 2])
+            with col_lbl:
+                st.markdown(f"**{i+1}.** {title[:60]}{'…' if len(title)>60 else ''}")
+                st.caption(url[:70] + ("…" if len(url) > 70 else ""))
+            with col_btn:
+                if st.button("🕷️ Crawl", key=f"crawl_single_{scraped_key}_{i}"):
+                    with st.spinner(f"Deep crawling {url[:40]}…"):
+                        result = crawl_url(url, title_hint=title, tier=tier)
+                    if result["success"]:
+                        existing = st.session_state.get(scraped_key, {})
+                        existing[url] = result["text"]
+                        st.session_state[scraped_key] = existing
+                        st.success(
+                            f"✅ Crawled `{url[:40]}` — {len(result['text']):,} chars via {result['tier']}. "
+                            "Click **Re-summarize** to update findings."
+                        )
+                        # Auto-seed this URL
+                        try:
+                            seed_db.add_seed(url, title)
+                            seed_db.mark_crawled(seed_db.get_seed_by_url(url)["id"])
+                        except Exception:
+                            pass
+                    else:
+                        st.error(f"❌ Failed: {result['error']}")
+
+    # Crawl all sources at once
+    if st.button(
+        f"🕷️ Deep Crawl all {len(sources)} {section_label}",
+        key=f"crawl_all_{scraped_key}",
+        use_container_width=True,
+    ):
+        progress_bar  = st.progress(0.0, text="Starting deep crawl…")
+        progress_text = st.empty()
+        completed_ref = {"n": 0}
+
+        def _on_progress(done, total):
+            completed_ref["n"] = done
+            pct = done / total if total else 0
+            progress_bar.progress(pct, text=f"Deep crawling… {done}/{total}")
+            progress_text.caption(f"{done} of {total} pages crawled")
+
+        with st.spinner(f"Deep crawling {len(sources)} pages via {tier}…"):
+            crawled = crawl_sources(
+                sources,
+                max_workers=min(threads, 5),
+                tier=tier,
+                progress_callback=_on_progress,
+            )
+
+        progress_bar.empty()
+        progress_text.empty()
+
+        if crawled:
+            existing = st.session_state.get(scraped_key, {})
+            existing.update(crawled)
+            st.session_state[scraped_key] = existing
+
+            # Auto-seed all successfully crawled URLs
+            for url, text in crawled.items():
+                src_title = next((s.get("title","") for s in sources if s.get("link")==url), "")
+                try:
+                    seed_db.add_seed(url, src_title)
+                    sid = seed_db.get_seed_by_url(url)
+                    if sid:
+                        seed_db.mark_crawled(sid["id"])
+                except Exception:
+                    pass
+
+            st.success(
+                f"✅ Deep crawled {len(crawled)}/{len(sources)} pages "
+                f"({sum(len(v) for v in crawled.values()):,} total chars). "
+                "Use **Re-summarize** below to regenerate findings with this richer content."
+            )
+        else:
+            st.warning("No pages could be deep crawled. Check Tor connectivity.")
+
+
 # ---------------------------------------------------------------------------
-# Full pipeline — uses st.status for expandable live stage feedback
+# Loaded investigation view
+# ---------------------------------------------------------------------------
+
+if "loaded_investigation" in st.session_state and not run_button:
+    inv    = st.session_state["loaded_investigation"]
+    inv_id = inv.get("id")
+
+    st.info(f"📂 **{inv['query']}** — {inv['timestamp'][:16]}")
+
+    with st.expander("📋 Notes & Management", expanded=False):
+        st.markdown(f"**Refined Query:** `{inv.get('refined_query','')}`")
+        st.markdown(f"**Model:** `{inv.get('model','')}` &nbsp;&nbsp; **Domain:** {inv.get('preset','')}")
+        st.markdown(f"**Sources:** {len(inv['sources'])}")
+        col_s, col_t = st.columns(2)
+        with col_s:
+            new_status = st.selectbox("Status", inv_db.VALID_STATUSES,
+                                       index=list(inv_db.VALID_STATUSES).index(inv.get("status","active")),
+                                       key="edit_status")
+        with col_t:
+            new_tags = st.text_input("Tags (comma-separated)", value=inv.get("tags",""), key="edit_tags")
+        if st.button("💾 Save changes", key="save_meta_btn"):
+            inv_db.update_status(inv_id, new_status)
+            inv_db.update_tags(inv_id, new_tags)
+            st.success("Updated.")
+            st.session_state["loaded_investigation"] = inv_db.load_one(inv_id)
+            st.rerun()
+        if st.button("🗑️ Delete investigation", key="delete_inv_btn", type="secondary"):
+            inv_db.delete_investigation(inv_id)
+            del st.session_state["loaded_investigation"]
+            st.rerun()
+
+    with st.expander(f"🔗 Sources ({len(inv['sources'])} results)", expanded=False):
+        for i, item in enumerate(inv["sources"], 1):
+            st.markdown(f"{i}. [{item.get('title','Untitled')}]({item.get('link','')})")
+
+    st.subheader(":red[🔎 Findings]", anchor=None, divider="gray")
+    st.markdown(inv["summary"])
+
+    col_md, col_pdf = st.columns(2)
+    with col_md:
+        b64 = base64.b64encode(inv["summary"].encode()).decode()
+        st.markdown(
+            f'<div class="aStyle">📥 <a href="data:file/markdown;base64,{b64}" '
+            f'download="summary_{inv["timestamp"][:10]}.md">Download Markdown</a></div>',
+            unsafe_allow_html=True,
+        )
+    with col_pdf:
+        pdf_bytes = generate_pdf(inv)
+        st.download_button("📄 Download PDF Report", data=pdf_bytes,
+                            file_name=f"robin_investigation_{inv['timestamp'][:10]}.pdf",
+                            mime="application/pdf", key="pdf_dl_loaded")
+
+    # Deep crawl for loaded investigation sources
+    if inv["sources"]:
+        st.divider()
+        st.markdown("### 🕷️ Deep Crawl")
+        st.caption(
+            "Fetch richer content directly from the sources referenced in this investigation, "
+            "then regenerate the findings with that deeper context."
+        )
+        _deep_crawl_sources_section(
+            sources=inv["sources"],
+            scraped_key="loaded_inv_scraped",
+            query_text=inv.get("refined_query", inv.get("query", "")),
+            section_label="investigation sources",
+        )
+
+    if st.button("✖ Clear"):
+        del st.session_state["loaded_investigation"]
+        st.rerun()
+
+
+# ---------------------------------------------------------------------------
+# Pipeline placeholders
+# ---------------------------------------------------------------------------
+
+status_slot          = st.empty()
+notes_placeholder    = st.empty()
+sources_placeholder  = st.empty()
+findings_placeholder = st.empty()
+
+
+# ---------------------------------------------------------------------------
+# Full pipeline
 # ---------------------------------------------------------------------------
 
 if run_button and query:
@@ -435,7 +561,6 @@ if run_button and query:
 
     with st.status("🔄 Running investigation pipeline…", expanded=True) as pipeline_status:
 
-        # Stage 1 — Load LLM
         st.write("🔄 Loading LLM…")
         try:
             llm = get_llm(model)
@@ -443,7 +568,6 @@ if run_button and query:
             pipeline_status.update(label="❌ Pipeline failed", state="error", expanded=True)
             _render_pipeline_error("load the selected LLM", e)
 
-        # Stage 2 — Refine query
         st.write("✏️ Refining query…")
         try:
             st.session_state.refined = refine_query(llm, query)
@@ -452,14 +576,12 @@ if run_button and query:
             pipeline_status.update(label="❌ Pipeline failed", state="error", expanded=True)
             _render_pipeline_error("refine the query", e)
 
-        # Stage 3 — Search
         st.write("🔍 Searching dark web (results pre-scored by keyword relevance)…")
         st.session_state.results = cached_search_results(st.session_state.refined, threads)
         if len(st.session_state.results) > max_results:
             st.session_state.results = st.session_state.results[:max_results]
         st.write(f"&nbsp;&nbsp;&nbsp;→ {len(st.session_state.results)} unique results")
 
-        # Stage 4 — Filter (batched)
         num_batches = (len(st.session_state.results) + 24) // 25
         st.write(f"🗂️ Filtering results ({num_batches} batch{'es' if num_batches > 1 else ''})…")
         st.session_state.filtered = filter_results(
@@ -469,14 +591,12 @@ if run_button and query:
             st.session_state.filtered = st.session_state.filtered[:max_scrape]
         st.write(f"&nbsp;&nbsp;&nbsp;→ {len(st.session_state.filtered)} selected")
 
-        # Stage 5 — Scrape
         st.write("📜 Scraping content…")
         st.session_state.scraped = cached_scrape_multiple(
             st.session_state.filtered, threads, max_content_chars
         )
         st.write(f"&nbsp;&nbsp;&nbsp;→ {len(st.session_state.scraped)} pages scraped")
 
-        # Stage 6 — Summary (streamed into findings area while status is still open)
         st.write("✍️ Generating summary…")
         with findings_placeholder.container():
             st.subheader(":red[🔎 Findings]", anchor=None, divider="gray")
@@ -511,8 +631,6 @@ if run_button and query:
                 f"**Scraped:** {len(st.session_state.scraped)} &nbsp;&nbsp; "
                 f"**Content size:** {max_content_chars:,} chars/page"
             )
-
-            # Inline tag/status editing immediately after a run
             st.markdown("---")
             col_s, col_t = st.columns(2)
             with col_s:
@@ -524,13 +642,30 @@ if run_button and query:
                 inv_db.update_tags(inv_id, quick_tags)
                 st.success("Saved.")
 
-    # Sources
+    # Sources + deep crawl section
     with sources_placeholder.container():
-        with st.expander(f"🔗 Sources ({len(st.session_state.filtered)} results)", expanded=False):
+        with st.expander(
+            f"🔗 Sources ({len(st.session_state.filtered)} results)", expanded=False
+        ):
             for i, item in enumerate(st.session_state.filtered, 1):
                 st.markdown(f"{i}. [{item.get('title','Untitled')}]({item.get('link','')})")
 
-    # Findings + download buttons
+        # ── Deep Crawl block lives right below sources ──
+        st.divider()
+        st.markdown("### 🕷️ Deep Crawl")
+        st.caption(
+            "Go deeper than Robin's standard scrape — fetch full JS-rendered content "
+            "from individual sources or all at once, then regenerate the findings with "
+            "richer context."
+        )
+        _deep_crawl_sources_section(
+            sources=st.session_state.filtered,
+            scraped_key="scraped",
+            query_text=st.session_state.refined,
+            section_label="result sources",
+        )
+
+    # Findings
     inv_dict_for_pdf = {
         "query":         query,
         "refined_query": st.session_state.refined,
@@ -546,14 +681,14 @@ if run_button and query:
 
 
 # ---------------------------------------------------------------------------
-# Re-summarize — reuses cached scraped data, skips search + scrape
+# Re-summarize — reuses cached scraped data (updated by deep crawl)
 # ---------------------------------------------------------------------------
 
 if st.session_state.get("scraped") and not run_button:
     st.divider()
     st.caption(
-        "🔁 **Re-summarize** — change the model or preset above, "
-        "then click below to regenerate findings from the same scraped data."
+        "🔁 **Re-summarize** — change model/preset above, or after a deep crawl, "
+        "to regenerate findings with updated content."
     )
     if st.button("🔁 Re-summarize with current settings", use_container_width=True, key="resummarize_btn"):
 
@@ -578,7 +713,6 @@ if st.session_state.get("scraped") and not run_button:
             )
             rs_status.update(label="✅ Re-summarization complete", state="complete", expanded=False)
 
-        # Save re-generated version
         new_inv_id = inv_db.save_investigation(
             query=original_query,
             refined_query=st.session_state.get("refined", original_query),
@@ -587,7 +721,6 @@ if st.session_state.get("scraped") and not run_button:
             sources=st.session_state.get("filtered", []),
             summary=st.session_state.streamed_summary,
         )
-        st.session_state["last_inv_id"] = new_inv_id
 
         inv_dict_for_pdf = {
             "query":         original_query,
