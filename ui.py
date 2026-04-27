@@ -1,6 +1,12 @@
 import base64
+import hashlib
+import os
+import platform
+import subprocess
+import tempfile
 import streamlit as st
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import quote
 
 from scrape import scrape_multiple
@@ -10,6 +16,7 @@ from llm import get_llm, refine_query, filter_results, generate_summary, PRESET_
 from export import generate_pdf
 import investigations as inv_db
 import seeds as seed_db
+import presets as preset_db
 from crawler import crawl_sources, crawl_url, probe_tier
 from config import (
     OPENAI_API_KEY,
@@ -42,6 +49,38 @@ def _validate_config() -> list:
     _check("GOOGLE_API_KEY",     GOOGLE_API_KEY,     "AIza")
     _check("OPENROUTER_API_KEY", OPENROUTER_API_KEY, "sk-or")
     return warnings
+
+
+def _open_path_in_system_app(path: str) -> tuple[bool, str]:
+    """
+    Hand `path` to the OS so the user's default app (text editor for .txt,
+    browser for .html, etc.) opens it. Server-side: only useful when
+    Streamlit runs on the same machine the user is sitting at.
+
+    Returns (ok, message).
+    """
+    try:
+        system = platform.system()
+        if system == "Darwin":
+            # `-t` forces a text editor (better default for inspecting content).
+            subprocess.Popen(["open", "-t", path])
+        elif system == "Windows":
+            os.startfile(path)  # type: ignore[attr-defined]
+        else:
+            # Linux / BSD — xdg-open picks the user's registered handler.
+            subprocess.Popen(["xdg-open", path])
+        return True, f"Launched system handler for `{path}`."
+    except FileNotFoundError as exc:
+        return False, f"Couldn't find a system-open command: {exc}"
+    except Exception as exc:
+        return False, f"Could not open `{path}`: {exc}"
+
+
+def _crawled_html_path(url: str) -> Path | None:
+    """Return the path to the saved rendered.html for `url`, or None if absent."""
+    h = hashlib.sha256(url.encode()).hexdigest()
+    candidate = Path("investigations") / "crawled" / h / "rendered.html"
+    return candidate if candidate.exists() else None
 
 
 def _render_pipeline_error(stage: str, err: Exception) -> None:
@@ -167,26 +206,148 @@ for name, value, is_cloud in [
     else:
         st.sidebar.markdown(f"&ensp;🔵 **{name}** — not configured *(optional)*")
 
+# Built-in domains. These four MUST keep their existing keys + behavior, so
+# they're hard-coded here exactly as before.
+_BUILTIN_PRESETS = {
+    "🔍 Dark Web Threat Intel":           "threat_intel",
+    "🦠 Ransomware / Malware Focus":       "ransomware_malware",
+    "👤 Personal / Identity Investigation": "personal_identity",
+    "🏢 Corporate Espionage / Data Leaks":  "corporate_espionage",
+}
+_BUILTIN_PLACEHOLDERS = {
+    "threat_intel":       "e.g. Pay extra attention to cryptocurrency wallet addresses.",
+    "ransomware_malware": "e.g. Highlight double-extortion tactics or RaaS affiliates.",
+    "personal_identity":  "e.g. Flag passport numbers and note country of origin.",
+    "corporate_espionage":"e.g. Prioritize source code repos, API keys, Slack dumps.",
+}
+
 with st.sidebar.expander("⚙️ Prompt Settings"):
-    preset_options = {
-        "🔍 Dark Web Threat Intel":           "threat_intel",
-        "🦠 Ransomware / Malware Focus":       "ransomware_malware",
-        "👤 Personal / Identity Investigation": "personal_identity",
-        "🏢 Corporate Espionage / Data Leaks":  "corporate_espionage",
-    }
-    preset_placeholders = {
-        "threat_intel":       "e.g. Pay extra attention to cryptocurrency wallet addresses.",
-        "ransomware_malware": "e.g. Highlight double-extortion tactics or RaaS affiliates.",
-        "personal_identity":  "e.g. Flag passport numbers and note country of origin.",
-        "corporate_espionage":"e.g. Prioritize source code repos, API keys, Slack dumps.",
-    }
-    selected_preset_label = st.selectbox("Research Domain", list(preset_options.keys()), key="preset_select")
-    selected_preset       = preset_options[selected_preset_label]
-    st.text_area("System Prompt", value=PRESET_PROMPTS[selected_preset].strip(),
-                 height=200, disabled=True, key="system_prompt_display")
-    custom_instructions = st.text_area("Custom Instructions (optional)",
-                                        placeholder=preset_placeholders[selected_preset],
-                                        height=100, key="custom_instructions")
+    custom_presets = preset_db.list_presets()
+
+    # Build the dropdown: built-ins first (preserves their existing labels),
+    # then any user-defined domains prefixed with ✨.
+    label_to_key: dict[str, str] = dict(_BUILTIN_PRESETS)
+    for cp in custom_presets:
+        label_to_key[f"✨ {cp['name']}"] = cp["key"]
+
+    selected_preset_label = st.selectbox(
+        "Research Domain", list(label_to_key.keys()), key="preset_select",
+    )
+    selected_preset = label_to_key[selected_preset_label]
+    is_custom = preset_db.is_custom_key(selected_preset)
+
+    if is_custom:
+        cp = preset_db.get_preset_by_key(selected_preset)
+        if cp is None:
+            # Stale selectbox state — shouldn't happen, but recover gracefully.
+            st.warning("This custom domain no longer exists. Pick another.")
+            selected_preset = "threat_intel"
+            cp = None
+            current_system_prompt = PRESET_PROMPTS["threat_intel"]
+        else:
+            current_system_prompt = cp["system_prompt"]
+            st.caption(
+                f"Created {cp['created_at'][:10]}"
+                + (f" · updated {cp['updated_at'][:10]}"
+                   if cp['updated_at'] != cp['created_at'] else "")
+            )
+
+        # Editable system prompt for custom domains.
+        edited = st.text_area(
+            "System Prompt (editable)",
+            value=current_system_prompt,
+            height=240,
+            key=f"system_prompt_edit_{cp['id'] if cp else 'none'}",
+        )
+        edited_desc = st.text_input(
+            "Description (optional)",
+            value=cp.get("description", "") if cp else "",
+            key=f"desc_edit_{cp['id'] if cp else 'none'}",
+        )
+
+        col_save, col_del = st.columns(2)
+        with col_save:
+            if cp and st.button("💾 Save", key=f"save_preset_{cp['id']}",
+                                use_container_width=True):
+                try:
+                    preset_db.update_preset(
+                        cp["id"],
+                        system_prompt=edited,
+                        description=edited_desc,
+                    )
+                    st.success("Saved.")
+                    st.rerun()
+                except ValueError as exc:
+                    st.error(str(exc))
+        with col_del:
+            if cp and st.button("🗑️ Delete", key=f"del_preset_{cp['id']}",
+                                use_container_width=True, type="secondary"):
+                preset_db.delete_preset(cp["id"])
+                st.success(f"Deleted '{cp['name']}'.")
+                st.rerun()
+
+        custom_placeholder = (
+            "e.g. Cross-reference any leaked email addresses against known "
+            "breach corpora and flag overlapping infrastructure."
+        )
+    else:
+        # Built-in domain — keep the legacy read-only display verbatim.
+        current_system_prompt = PRESET_PROMPTS[selected_preset]
+        st.text_area(
+            "System Prompt", value=current_system_prompt.strip(),
+            height=200, disabled=True, key="system_prompt_display",
+        )
+        custom_placeholder = _BUILTIN_PLACEHOLDERS[selected_preset]
+
+    custom_instructions = st.text_area(
+        "Custom Instructions (optional)",
+        placeholder=custom_placeholder,
+        height=100,
+        key="custom_instructions",
+    )
+
+    # ── Create new custom domain ─────────────────────────────────────────
+    st.divider()
+    st.caption("➕ Create a new custom research domain")
+    with st.form("new_preset_form", clear_on_submit=True):
+        new_preset_name = st.text_input(
+            "Domain name",
+            placeholder="e.g. Crypto Tracing",
+        )
+        new_preset_desc = st.text_input(
+            "Description (optional)",
+            placeholder="One-line summary of what this domain focuses on",
+        )
+        new_preset_prompt = st.text_area(
+            "System prompt",
+            height=200,
+            placeholder=(
+                "Describe the analyst persona, the analysis rules, and the "
+                "output format. {query} will be substituted with the user's "
+                "query at runtime."
+            ),
+        )
+        if st.form_submit_button("➕ Create domain"):
+            try:
+                preset_db.create_preset(
+                    new_preset_name, new_preset_prompt, new_preset_desc,
+                )
+                st.success(f"Created '{new_preset_name.strip()}'.")
+                st.rerun()
+            except ValueError as exc:
+                st.error(str(exc))
+
+# Resolve the active system prompt once, after the expander block, so the
+# rest of the script can pass it straight into generate_summary regardless
+# of whether the user picked a built-in or custom domain.
+_active_custom = (
+    preset_db.get_preset_by_key(selected_preset)
+    if preset_db.is_custom_key(selected_preset) else None
+)
+selected_system_prompt = (
+    _active_custom["system_prompt"] if _active_custom
+    else PRESET_PROMPTS.get(selected_preset, PRESET_PROMPTS["threat_intel"])
+)
 
 
 # ---------------------------------------------------------------------------
@@ -300,6 +461,18 @@ with st.sidebar.expander("🌱 Seed Manager", expanded=False):
                         f"**Added:** {s['added_at'][:16]}"
                         f"{crawled_line}"
                     )
+
+                    # ── Open in browser tab ────────────────────────────────
+                    # Plain HTML link with target="_blank" — clicked in the
+                    # user's browser, so it opens in whichever browser they
+                    # have (Tor Browser handles .onion; otherwise it'll fail
+                    # in a normal browser, which is on them, not us).
+                    st.markdown(
+                        f'🌐 <a href="{s["url"]}" target="_blank" '
+                        f'rel="noopener noreferrer">Open URL in new browser tab ↗</a>',
+                        unsafe_allow_html=True,
+                    )
+
                     content = s.get("content") or ""
                     if content:
                         st.caption(f"📄 {len(content):,} chars saved")
@@ -307,6 +480,49 @@ with st.sidebar.expander("🌱 Seed Manager", expanded=False):
                             st.text(content[:5000] + ("…" if len(content) > 5000 else ""))
                     else:
                         st.caption("No content saved yet — run Deep Crawl to populate.")
+
+                    # ── Open extracted content in system editor ────────────
+                    # Writes the saved text to a temp .txt file then asks
+                    # the OS to launch the user's default text editor.
+                    # Only meaningful when streamlit runs on the user's own
+                    # machine (typical for local OSINT use).
+                    if content:
+                        if st.button(
+                            "📝 Open content in system editor",
+                            key=f"editor_open_{s['id']}",
+                            help="Writes the extracted text to a temp .txt and "
+                                 "calls the OS handler (xdg-open / open / startfile).",
+                        ):
+                            try:
+                                fd, tmp = tempfile.mkstemp(
+                                    prefix=f"robin_seed_{s['id']}_",
+                                    suffix=".txt",
+                                )
+                                with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                                    fh.write(f"# {s['url']}\n")
+                                    fh.write(f"# Crawled: {s.get('crawled_at') or '—'}\n")
+                                    fh.write(f"# {len(content):,} chars\n\n")
+                                    fh.write(content)
+                                ok, msg = _open_path_in_system_app(tmp)
+                                if ok:
+                                    st.success(f"📝 {msg}")
+                                else:
+                                    st.error(f"❌ {msg}\n\nFile saved at `{tmp}`.")
+                            except Exception as exc:
+                                st.error(f"❌ Could not prepare temp file: {exc}")
+
+                    # If the saved rendered.html still exists, offer to open
+                    # that in the user's default app too (typically a browser
+                    # — handy for inspecting the original markup).
+                    html_path = _crawled_html_path(s["url"])
+                    if html_path is not None:
+                        if st.button(
+                            "🌐 Open saved HTML in default app",
+                            key=f"html_open_{s['id']}",
+                            help=f"Asks the OS to open {html_path}",
+                        ):
+                            ok, msg = _open_path_in_system_app(str(html_path))
+                            (st.success if ok else st.error)(msg)
 
                     if st.button("🗑️ Delete seed", key=f"del_seed_{s['id']}"):
                         seed_db.delete_seed(s["id"])
@@ -384,9 +600,17 @@ with st.form("search_form", clear_on_submit=True):
 # Shared helpers
 # ---------------------------------------------------------------------------
 
-def _render_findings(summary_text: str, inv_dict: dict):
-    """Render findings with Markdown + PDF download buttons."""
-    with findings_placeholder.container():
+def _render_findings(summary_text: str, inv_dict: dict, target=None):
+    """
+    Render findings with Markdown + PDF download buttons.
+
+    `target` is the placeholder/container to render into. If omitted, the
+    module-level `findings_placeholder` is used (which only exists once
+    the script reaches the pipeline-placeholder block, so callers in the
+    loaded-investigation view must always pass an explicit target).
+    """
+    container = target.container() if target is not None else findings_placeholder.container()
+    with container:
         st.subheader(":red[🔎 Findings]", anchor=None, divider="gray")
         st.markdown(summary_text)
         col_md, col_pdf = st.columns(2)
@@ -408,15 +632,28 @@ def _render_findings(summary_text: str, inv_dict: dict):
             )
 
 
-def _run_summary_stage(llm, query_text, scraped, preset, custom_instr, summary_slot):
-    """Stream LLM summary into summary_slot, return full accumulated text."""
+def _run_summary_stage(
+    llm, query_text, scraped, preset, custom_instr, summary_slot,
+    system_prompt_override: str | None = None,
+):
+    """
+    Stream the LLM summary into summary_slot, return full accumulated text.
+
+    `system_prompt_override`, if given, is used verbatim as the system prompt
+    — that's how user-defined custom research domains flow through.
+    Built-in domains continue to resolve via `preset` against PRESET_PROMPTS.
+    """
     streamed = {"text": ""}
     def ui_emit(chunk: str):
         streamed["text"] += chunk
         summary_slot.markdown(streamed["text"])
     stream_handler = BufferedStreamingHandler(ui_callback=ui_emit)
     llm.callbacks  = [stream_handler]
-    generate_summary(llm, query_text, scraped, preset=preset, custom_instructions=custom_instr)
+    generate_summary(
+        llm, query_text, scraped,
+        preset=preset, custom_instructions=custom_instr,
+        system_prompt_override=system_prompt_override,
+    )
     return streamed["text"]
 
 
@@ -663,18 +900,26 @@ if "loaded_investigation" in st.session_state and not run_button:
                 rs_query = inv.get("refined_query") or inv.get("query", "")
                 st.write("✍️ Streaming new summary…")
 
-                # Render in a fresh placeholder below so the original
-                # findings stay visible for comparison.
-                rs_findings_slot = st.empty()
-                with rs_findings_slot.container():
+                # Stream into a temporary slot so the user can watch the
+                # tokens arrive. Once streaming finishes we replace this
+                # block with the full _render_findings() output (Markdown +
+                # download buttons) — using a SECOND placeholder defined
+                # below as the explicit render target.
+                streaming_slot = st.empty()
+                with streaming_slot.container():
                     st.subheader(":red[🔎 Findings (re-summarized)]", anchor=None, divider="gray")
                     summary_slot = st.empty()
 
                 new_summary = _run_summary_stage(
                     llm, rs_query, content_dict,
                     selected_preset, custom_instructions, summary_slot,
+                    system_prompt_override=selected_system_prompt,
                 )
                 rs_status.update(label="✅ Re-summarization complete", state="complete", expanded=False)
+
+            # Clear the streaming placeholder so the final findings render
+            # below replaces it cleanly (no duplicate headings).
+            streaming_slot.empty()
 
             # Save as a NEW investigation linked to the same query so the
             # original record stays intact for comparison.
@@ -702,7 +947,10 @@ if "loaded_investigation" in st.session_state and not run_button:
                 "sources":       inv["sources"],
                 "summary":       new_summary,
             }
-            _render_findings(new_summary, inv_dict_for_pdf)
+            # Pass an explicit local placeholder — the module-level
+            # `findings_placeholder` doesn't exist yet at this point in
+            # script execution (it's defined below the loaded-inv block).
+            _render_findings(new_summary, inv_dict_for_pdf, target=st.empty())
 
     if st.button("✖ Clear"):
         del st.session_state["loaded_investigation"]
@@ -775,6 +1023,7 @@ if run_button and query:
         st.session_state.streamed_summary = _run_summary_stage(
             llm, query, st.session_state.scraped,
             selected_preset, custom_instructions, summary_slot,
+            system_prompt_override=selected_system_prompt,
         )
 
         pipeline_status.update(label="✅ Pipeline complete", state="complete", expanded=False)
@@ -890,6 +1139,7 @@ if (
             st.session_state.streamed_summary = _run_summary_stage(
                 llm, original_query, st.session_state.scraped,
                 selected_preset, custom_instructions, summary_slot,
+                system_prompt_override=selected_system_prompt,
             )
             rs_status.update(label="✅ Re-summarization complete", state="complete", expanded=False)
 

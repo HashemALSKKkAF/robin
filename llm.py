@@ -395,8 +395,28 @@ PRESET_PROMPTS = {
 }
 
 
-def generate_summary(llm, query, content, preset="threat_intel", custom_instructions=""):
-    system_prompt = PRESET_PROMPTS.get(preset, PRESET_PROMPTS["threat_intel"])
+def generate_summary(
+    llm,
+    query,
+    content,
+    preset: str = "threat_intel",
+    custom_instructions: str = "",
+    system_prompt_override: str | None = None,
+):
+    """
+    Generate the final investigation summary.
+
+    Resolution order for the system prompt:
+      1. `system_prompt_override` (if provided) — used verbatim. This is how
+         the UI passes user-defined custom-domain prompts through.
+      2. `PRESET_PROMPTS[preset]` — one of the four built-in domains.
+      3. `PRESET_PROMPTS["threat_intel"]` — final fallback for unknown keys.
+    """
+    if system_prompt_override and system_prompt_override.strip():
+        system_prompt = system_prompt_override
+    else:
+        system_prompt = PRESET_PROMPTS.get(preset, PRESET_PROMPTS["threat_intel"])
+
     if custom_instructions and custom_instructions.strip():
         system_prompt = system_prompt.rstrip() + f"\n\nAdditionally focus on: {custom_instructions.strip()}"
     prompt_template = ChatPromptTemplate(
