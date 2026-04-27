@@ -30,6 +30,7 @@ import hashlib
 import logging
 import threading
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse, urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -110,7 +111,7 @@ def probe_tier() -> str:
     return "requests"
 
 
-def _find_socks_port() -> int:
+def _find_socks_port() -> Optional[int]:
     """Return the first reachable Tor SOCKS port, or None."""
     import socket
     for port in _TOR_SOCKS_PORTS:
@@ -175,7 +176,7 @@ def _crawl_selenium(url: str, url_hash: str) -> str:
         raise RuntimeError("No Tor SOCKS port reachable — is Tor running?")
 
     opts = Options()
-    opts.headless = True
+    opts.add_argument("--headless")
     if binary:
         opts.binary_location = binary
 
@@ -298,7 +299,7 @@ def _crawl_requests(url: str, url_hash: str, title_hint: str = "") -> str:
 # Single-URL crawl dispatcher (with retry + tier fallback)
 # ---------------------------------------------------------------------------
 
-def crawl_url(url: str, title_hint: str = "", tier: str = None) -> dict:
+def crawl_url(url: str, title_hint: str = "", tier: Optional[str] = None) -> dict:
     """
     Crawl a single .onion (or clearweb) URL and return a result dict:
       {
@@ -358,7 +359,7 @@ def crawl_url(url: str, title_hint: str = "", tier: str = None) -> dict:
 def crawl_sources(
     sources: list,
     max_workers: int = MAX_WORKERS,
-    tier: str = None,
+    tier: Optional[str] = None,
     progress_callback=None,
 ) -> dict:
     """

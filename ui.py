@@ -1,13 +1,12 @@
 import base64
 import streamlit as st
 from datetime import datetime
+from urllib.parse import quote
 
 from scrape import scrape_multiple
 from search import get_search_results
 from llm_utils import BufferedStreamingHandler, get_model_choices
 from llm import get_llm, refine_query, filter_results, generate_summary, PRESET_PROMPTS
-from tor_utils import refresh_tor_circuit, get_tor_exit_ip
-from scrape import get_tor_session
 from export import generate_pdf
 import investigations as inv_db
 import seeds as seed_db
@@ -71,7 +70,9 @@ def _render_pipeline_error(stage: str, err: Exception) -> None:
 
 @st.cache_data(ttl=200, show_spinner=False)
 def cached_search_results(refined_query: str, threads: int):
-    return get_search_results(refined_query.replace(" ", "+"), max_workers=threads)
+    # Percent-encode the query so special characters (& ? = # /) don't break
+    # the engine URL templates that interpolate it as `?q={query}`.
+    return get_search_results(quote(refined_query, safe=""), max_workers=threads)
 
 
 @st.cache_data(ttl=200, show_spinner=False)
@@ -125,7 +126,19 @@ if not model_options:
     st.sidebar.error("⛔ No LLM models available. Set at least one API key in `.env` and restart.")
     st.stop()
 
-default_model_index = next((i for i, n in enumerate(model_options) if n.lower() == "gpt4o"), 0)
+# Preferred default models, in priority order. The first one that's actually
+# present in `model_options` (i.e. has its API key configured) wins.
+_PREFERRED_DEFAULTS = (
+    "claude-sonnet-4-5",
+    "gpt-5.1",
+    "gpt-4.1",
+    "gemini-2.5-pro",
+    "claude-sonnet-4.5-openrouter",
+)
+default_model_index = next(
+    (model_options.index(m) for m in _PREFERRED_DEFAULTS if m in model_options),
+    0,
+)
 model = st.sidebar.selectbox("Select LLM Model", model_options, index=default_model_index, key="model_select")
 
 threads           = st.sidebar.slider("Scraping Threads", 1, 16, 4, key="thread_slider")
@@ -212,28 +225,13 @@ if st.sidebar.button("🔍 Check Search Engines", use_container_width=True):
             detail = f"{r['latency_ms']}ms" if r["status"] == "up" else r["error"]
             st.sidebar.markdown(f"&ensp;{icon} **{r['name']}** — {detail}")
 
-if st.sidebar.button("🔄 Refresh Tor Circuit", use_container_width=True,
-                     help="Send NEWNYM signal. Requires ControlPort 9051 in torrc."):
-    with st.sidebar, st.spinner("Requesting new Tor circuit..."):
-        result = refresh_tor_circuit()
-    if result["status"] == "ok":
-        try:
-            new_ip = get_tor_exit_ip(get_tor_session())
-        except Exception:
-            new_ip = None
-        ip_line = f"\n\nNew exit IP: `{new_ip}`" if new_ip else ""
-        st.sidebar.success(f"✅ {result['message']}{ip_line}")
-    else:
-        st.sidebar.error(f"❌ Circuit refresh failed\n\n{result['message']}")
-
-
 # ---------------------------------------------------------------------------
 # Sidebar — Seed Manager
 # ---------------------------------------------------------------------------
 
 st.sidebar.divider()
 with st.sidebar.expander("🌱 Seed Manager", expanded=False):
-    st.caption("Add .onion URLs to the seed list for future deep crawling.")
+    st.caption("Add .onion URLs and inspect previously deep-crawled content.")
 
     with st.form("add_seed_form", clear_on_submit=True):
         new_url  = st.text_input("URL", placeholder="http://example.onion")
@@ -250,15 +248,71 @@ with st.sidebar.expander("🌱 Seed Manager", expanded=False):
 
     all_seeds = seed_db.get_all_seeds()
     if all_seeds:
-        st.caption(f"**{len(all_seeds)} seeds** in store")
-        for s in all_seeds[:10]:
-            crawled = "✅" if s["crawled"] else "⏳"
-            loaded  = "📄" if s["loaded"]  else "—"
-            st.markdown(
-                f"{crawled}{loaded} `{s['url'][:40]}{'…' if len(s['url'])>40 else ''}`"
+        # Filter dropdown — same UX as Past Investigations.
+        seed_filter = st.selectbox(
+            "Filter seeds",
+            ["all", "crawled", "uncrawled", "with content"],
+            key="seed_filter",
+        )
+        if seed_filter == "crawled":
+            visible = [s for s in all_seeds if s["crawled"]]
+        elif seed_filter == "uncrawled":
+            visible = [s for s in all_seeds if not s["crawled"]]
+        elif seed_filter == "with content":
+            visible = [s for s in all_seeds if (s.get("content") or "")]
+        else:
+            visible = all_seeds
+
+        st.caption(f"**{len(visible)} / {len(all_seeds)} seeds**")
+
+        if visible:
+            def _seed_label(s):
+                icon  = "✅" if s["crawled"] else "⏳"
+                doc   = "📄" if (s.get("content") or "") else "—"
+                short = s["url"][:34] + ("…" if len(s["url"]) > 34 else "")
+                return f"{icon}{doc} {short}"
+
+            seed_labels = [_seed_label(s) for s in visible]
+            # Keying by filter ensures the picker resets when filter changes,
+            # so it can't reference an item that's been filtered out.
+            seed_key = f"seed_select_{seed_filter}"
+            chosen = st.selectbox(
+                "Open seed", ["(none)"] + seed_labels, key=seed_key,
             )
-        if len(all_seeds) > 10:
-            st.caption(f"… and {len(all_seeds)-10} more")
+            if chosen != "(none)":
+                try:
+                    s = visible[seed_labels.index(chosen)]
+                except ValueError:
+                    s = None
+                if s:
+                    status_word = "crawled" if s["crawled"] else "pending"
+                    code = s.get("status_code")
+                    code_part = f" (HTTP {code})" if code else ""
+                    crawled_at = s.get("crawled_at")
+                    crawled_line = (
+                        f"  \n**Last crawled:** {crawled_at[:16]}"
+                        if crawled_at else ""
+                    )
+                    st.markdown(f"**Label:** {s.get('name') or '—'}")
+                    st.markdown(
+                        f"**URL:** `{s['url']}`  \n"
+                        f"**Status:** {status_word}{code_part}  \n"
+                        f"**Added:** {s['added_at'][:16]}"
+                        f"{crawled_line}"
+                    )
+                    content = s.get("content") or ""
+                    if content:
+                        st.caption(f"📄 {len(content):,} chars saved")
+                        with st.expander("View extracted content", expanded=False):
+                            st.text(content[:5000] + ("…" if len(content) > 5000 else ""))
+                    else:
+                        st.caption("No content saved yet — run Deep Crawl to populate.")
+
+                    if st.button("🗑️ Delete seed", key=f"del_seed_{s['id']}"):
+                        seed_db.delete_seed(s["id"])
+                        st.rerun()
+        else:
+            st.caption("No seeds match this filter.")
     else:
         st.caption("No seeds yet.")
 
@@ -283,11 +337,28 @@ if saved:
         f"{inv['timestamp'][:16]} — {inv['query'][:38]} [{inv['status']}]"
         for inv in saved
     ]
-    selected_label = st.sidebar.selectbox("Load investigation", ["(none)"] + inv_labels, key="inv_select")
+    # Including the active filters in the widget key forces Streamlit to
+    # reset the picker when the filter set changes — otherwise a previously
+    # selected label can persist into a filter set that no longer contains
+    # it, which causes the load selectbox to render blank/freeze on scroll.
+    inv_select_key = f"inv_select_{filter_status}_{filter_tag}"
+    selected_label = st.sidebar.selectbox(
+        "Load investigation", ["(none)"] + inv_labels, key=inv_select_key,
+    )
     if selected_label != "(none)":
-        selected_inv = saved[inv_labels.index(selected_label)]
-        if st.sidebar.button("📂 Load", use_container_width=True, key="load_inv_btn"):
+        try:
+            selected_inv = saved[inv_labels.index(selected_label)]
+        except ValueError:
+            selected_inv = None
+        if selected_inv and st.sidebar.button(
+            "📂 Load", use_container_width=True, key="load_inv_btn",
+        ):
             st.session_state["loaded_investigation"] = selected_inv
+            # Clear any leftover fresh-run state so the loaded view
+            # doesn't accidentally re-summarize stale pipeline data.
+            for k in ("refined", "results", "filtered", "scraped",
+                      "streamed_summary", "last_inv_id"):
+                st.session_state.pop(k, None)
             st.rerun()
 else:
     st.sidebar.caption("No saved investigations yet.")
@@ -402,16 +473,30 @@ def _deep_crawl_sources_section(
                         existing = st.session_state.get(scraped_key, {})
                         existing[url] = result["text"]
                         st.session_state[scraped_key] = existing
-                        st.success(
-                            f"✅ Crawled `{url[:40]}` — {len(result['text']):,} chars via {result['tier']}. "
-                            "Click **Re-summarize** to update findings."
-                        )
-                        # Auto-seed this URL
+                        # Persist the crawl into the seeds DB so it survives reloads.
+                        saved_to_db = False
                         try:
                             seed_db.add_seed(url, title)
-                            seed_db.mark_crawled(seed_db.get_seed_by_url(url)["id"])
+                            sid = seed_db.get_seed_by_url(url)
+                            if sid:
+                                seed_db.mark_crawled(
+                                    sid["id"], status_code=200, content=result["text"],
+                                )
+                                saved_to_db = True
                         except Exception:
                             pass
+                        save_msg = (
+                            "Saved to **Seed Manager** (sidebar) and HTML archived to "
+                            "`investigations/crawled/<hash>/`."
+                            if saved_to_db
+                            else "HTML archived to `investigations/crawled/<hash>/` "
+                                 "(could not save to Seed Manager)."
+                        )
+                        st.success(
+                            f"✅ Crawled `{url[:40]}` — {len(result['text']):,} chars via "
+                            f"{result['tier']}.\n\n{save_msg}\n\n"
+                            "Click **Re-summarize** below to update findings."
+                        )
                     else:
                         st.error(f"❌ Failed: {result['error']}")
 
@@ -447,20 +532,24 @@ def _deep_crawl_sources_section(
             existing.update(crawled)
             st.session_state[scraped_key] = existing
 
-            # Auto-seed all successfully crawled URLs
+            # Persist every successfully crawled URL into the seeds DB.
+            saved_count = 0
             for url, text in crawled.items():
                 src_title = next((s.get("title","") for s in sources if s.get("link")==url), "")
                 try:
                     seed_db.add_seed(url, src_title)
                     sid = seed_db.get_seed_by_url(url)
                     if sid:
-                        seed_db.mark_crawled(sid["id"])
+                        seed_db.mark_crawled(sid["id"], status_code=200, content=text)
+                        saved_count += 1
                 except Exception:
                     pass
 
             st.success(
                 f"✅ Deep crawled {len(crawled)}/{len(sources)} pages "
                 f"({sum(len(v) for v in crawled.values()):,} total chars). "
+                f"{saved_count} saved to **Seed Manager** (sidebar). "
+                "HTML archived to `investigations/crawled/<hash>/`. "
                 "Use **Re-summarize** below to regenerate findings with this richer content."
             )
         else:
@@ -535,8 +624,89 @@ if "loaded_investigation" in st.session_state and not run_button:
             section_label="investigation sources",
         )
 
+        # ── Re-summarize THIS investigation ──────────────────────────────────
+        st.divider()
+        st.markdown("### 🔁 Re-summarize this investigation")
+        st.caption(
+            "Regenerate the findings using the loaded investigation's sources "
+            "and the currently selected model/preset. Deep-crawled content (if any) "
+            "is used automatically; otherwise sources are re-scraped on the fly."
+        )
+        if st.button(
+            "🔁 Re-summarize this investigation",
+            use_container_width=True,
+            key=f"resummarize_loaded_{inv_id}",
+        ):
+            with st.status("✍️ Re-summarizing loaded investigation…", expanded=True) as rs_status:
+                st.write("🔄 Loading LLM…")
+                try:
+                    llm = get_llm(model)
+                except Exception as e:
+                    rs_status.update(label="❌ Failed", state="error")
+                    _render_pipeline_error("load the selected LLM", e)
+
+                # Prefer deep-crawled content; fall back to a fresh scrape of
+                # the loaded investigation's sources so this button always works.
+                content_dict = st.session_state.get("loaded_inv_scraped") or {}
+                if not content_dict:
+                    st.write("📜 Scraping loaded investigation sources…")
+                    content_dict = cached_scrape_multiple(
+                        inv["sources"], threads, max_content_chars,
+                    )
+                    st.write(f"&nbsp;&nbsp;&nbsp;→ {len(content_dict)} pages scraped")
+                else:
+                    st.write(
+                        f"📦 Using {len(content_dict)} deep-crawled pages "
+                        f"({sum(len(v) for v in content_dict.values()):,} chars)."
+                    )
+
+                rs_query = inv.get("refined_query") or inv.get("query", "")
+                st.write("✍️ Streaming new summary…")
+
+                # Render in a fresh placeholder below so the original
+                # findings stay visible for comparison.
+                rs_findings_slot = st.empty()
+                with rs_findings_slot.container():
+                    st.subheader(":red[🔎 Findings (re-summarized)]", anchor=None, divider="gray")
+                    summary_slot = st.empty()
+
+                new_summary = _run_summary_stage(
+                    llm, rs_query, content_dict,
+                    selected_preset, custom_instructions, summary_slot,
+                )
+                rs_status.update(label="✅ Re-summarization complete", state="complete", expanded=False)
+
+            # Save as a NEW investigation linked to the same query so the
+            # original record stays intact for comparison.
+            new_inv_id = inv_db.save_investigation(
+                query=inv.get("query", ""),
+                refined_query=rs_query,
+                model=model,
+                preset_label=selected_preset_label,
+                sources=inv["sources"],
+                summary=new_summary,
+            )
+            st.success(
+                f"✅ Saved as new investigation #{new_inv_id}. "
+                "The original investigation is unchanged."
+            )
+
+            inv_dict_for_pdf = {
+                "query":         inv.get("query", ""),
+                "refined_query": rs_query,
+                "model":         model,
+                "preset":        selected_preset_label,
+                "status":        "active",
+                "tags":          "",
+                "timestamp":     datetime.now().isoformat(),
+                "sources":       inv["sources"],
+                "summary":       new_summary,
+            }
+            _render_findings(new_summary, inv_dict_for_pdf)
+
     if st.button("✖ Clear"):
         del st.session_state["loaded_investigation"]
+        st.session_state.pop("loaded_inv_scraped", None)
         st.rerun()
 
 
@@ -682,9 +852,19 @@ if run_button and query:
 
 # ---------------------------------------------------------------------------
 # Re-summarize — reuses cached scraped data (updated by deep crawl)
+#
+# Only fires for a fresh-run context. When a past investigation is loaded,
+# the loaded view has its own Re-summarize button that operates on that
+# investigation's sources — without this guard, the bottom button would
+# operate on stale fresh-run data even while a different investigation is
+# being viewed.
 # ---------------------------------------------------------------------------
 
-if st.session_state.get("scraped") and not run_button:
+if (
+    st.session_state.get("scraped")
+    and not run_button
+    and "loaded_investigation" not in st.session_state
+):
     st.divider()
     st.caption(
         "🔁 **Re-summarize** — change model/preset above, or after a deep crawl, "

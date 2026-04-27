@@ -16,7 +16,9 @@ seeds
   status_code INTEGER                  -- last HTTP response code (nullable)
   crawled     INTEGER NOT NULL DEFAULT 0   -- 0/1 bool
   loaded      INTEGER NOT NULL DEFAULT 0   -- 0/1 bool (deep content extracted)
-  added_at    TEXT NOT NULL               -- ISO-8601 timestamp
+  content     TEXT    NOT NULL DEFAULT '' -- extracted plain-text content
+  crawled_at  TEXT                        -- ISO-8601 of last crawl
+  added_at    TEXT    NOT NULL            -- ISO-8601 timestamp
 """
 
 import hashlib
@@ -57,11 +59,19 @@ def init_seeds_table() -> None:
                 status_code INTEGER,
                 crawled     INTEGER NOT NULL DEFAULT 0,
                 loaded      INTEGER NOT NULL DEFAULT 0,
+                content     TEXT    NOT NULL DEFAULT '',
+                crawled_at  TEXT,
                 added_at    TEXT    NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_seeds_crawled ON seeds(crawled);
             CREATE INDEX IF NOT EXISTS idx_seeds_loaded  ON seeds(loaded);
         """)
+        # Idempotent migration for older DBs that pre-date `content`/`crawled_at`.
+        existing_cols = {row["name"] for row in conn.execute("PRAGMA table_info(seeds)")}
+        if "content" not in existing_cols:
+            conn.execute("ALTER TABLE seeds ADD COLUMN content TEXT NOT NULL DEFAULT ''")
+        if "crawled_at" not in existing_cols:
+            conn.execute("ALTER TABLE seeds ADD COLUMN crawled_at TEXT")
 
 
 # ---------------------------------------------------------------------------
@@ -107,19 +117,38 @@ def add_seed(url: str, name: str = "") -> dict:
     return get_seed_by_url(url)
 
 
-def mark_crawled(seed_id: int, status_code: int = None) -> None:
-    """Mark a seed as crawled (Selenium/requests pass complete)."""
+def mark_crawled(seed_id: int, status_code: int = None, content: str = "") -> None:
+    """
+    Mark a seed as crawled. If `content` is provided, it's persisted into the
+    `content` column and the seed is also flagged as loaded — so a single call
+    is enough after a successful Deep Crawl.
+    """
+    ts = datetime.now().isoformat()
     with _connect() as conn:
-        conn.execute(
-            "UPDATE seeds SET crawled=1, status_code=? WHERE id=?",
-            (status_code, seed_id),
-        )
+        if content:
+            conn.execute(
+                """UPDATE seeds
+                      SET crawled=1, loaded=1, status_code=?, content=?, crawled_at=?
+                    WHERE id=?""",
+                (status_code, content, ts, seed_id),
+            )
+        else:
+            conn.execute(
+                "UPDATE seeds SET crawled=1, status_code=?, crawled_at=? WHERE id=?",
+                (status_code, ts, seed_id),
+            )
 
 
-def mark_loaded(seed_id: int) -> None:
+def mark_loaded(seed_id: int, content: str = "") -> None:
     """Mark a seed as fully loaded (content extracted and ready for LLM)."""
     with _connect() as conn:
-        conn.execute("UPDATE seeds SET loaded=1 WHERE id=?", (seed_id,))
+        if content:
+            conn.execute(
+                "UPDATE seeds SET loaded=1, content=? WHERE id=?",
+                (content, seed_id),
+            )
+        else:
+            conn.execute("UPDATE seeds SET loaded=1 WHERE id=?", (seed_id,))
 
 
 def delete_seed(seed_id: int) -> None:

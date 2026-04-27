@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Trojans - DarkHub</title><meta name="description"
+        content="Darkhub is a darknet marketplace that accepts Bitcoin (BTC) and Monero (XMR). Darkhub hosts thousands of products across a wide range of categories, with support from several hundred certified merchants.">  <meta name="keywords"
+        content="marketplace, market, drugs, market, barbiturates, benzos, cannabis, edibles, weed, hash, concentrates, seeds, dissociatives, ketamine, ghb, gbl, methoxetamine, pcp, a-oil, pmk oil, glycidate, ephedrine, pseudoephedrine, phenyl-2-propanone, apaan, bmk oil, safrole oil, ecstasy, mdma, xtc pills, mda, opioids, heroin, opium, oxycodone, codeine, methadone, heroin black tar, hydrocodone, morphine, paraphernalia, prescription, relaxants, psychodelics, salvia, 5-MeO, mushrooms, shrooms, lsd, dmt, mescaline, 2c, 2cb, nb, rcs, reagents, acid, steroids, stimulants, amphetamine, methamphetamine, cocaine, crack, adderall, tobacco, weight loss, wiki, kush, fast, meth, crystal, buy drugs, sell drugs, blow, xtc, coke, oxy, adhd, meds, medication, medic, med, crystal meth, meth, porn, accounts, alice, sex, cc, credit card, bank, money, make, online, onions, sexy, teen, xxx, sex, fuck, codeine, tramadol, bitcoin, monero, xmr, pornography, porn">
+    <meta name="author" content="DarkHub">  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    #category_btn_1:checked ~ a .subcat_1 { display: block !important; }
+    #category_btn_2:checked ~ a .subcat_2 { display: block !important; }
+    #category_btn_3:checked ~ a .subcat_3 { display: block !important; }
+    #category_btn_4:checked ~ a .subcat_4 { display: block !important; }
+    #category_btn_5:checked ~ a .subcat_5 { display: block !important; }
+    #category_btn_6:checked ~ a .subcat_6 { display: block !important; }
+    #category_btn_7:checked ~ a .subcat_7 { display: block !important; }
+    #category_btn_8:checked ~ a .subcat_8 { display: block !important; }
+    #category_btn_9:checked ~ a .subcat_9 { display: block !important; }
+    #category_btn_10:checked ~ a .subcat_10 { display: block !important; }
+    #category_btn_11:checked ~ a .subcat_11 { display: block !important; }
+    #category_btn_12:checked ~ a .subcat_12 { display: block !important; }
+    #category_btn_13:checked ~ a .subcat_13 { display: block !important; }
+    #category_btn_14:checked ~ a .subcat_14 { display: block !important; }
+    #category_btn_15:checked ~ a .subcat_15 { display: block !important; }
+      </style>
+</head>
+<body>
+
+
+<div class="navigation">
+  <div class="menu">
+    <a class="menu-item" href="/"><img alt="DarkHub" height="16px" src="/logo.png" /></a>
+    <a class="menu-item" href="/search">
+      <svg class="small-icon" fill="var(--accent-foreground-color)" xmlns="http://www.w3.org/2000/svg"
+           viewBox="0 0 512 512">
+        <path
+          d="M368 208A160 160 0 1 0 48 208a160 160 0 1 0 320 0zM337.1 371.1C301.7 399.2 256.8 416 208 416C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208c0 48.8-16.8 93.7-44.9 129.1L505 471c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0L337.1 371.1z" />
+      </svg>
+      Search</a>
+    <a class="menu-item hidden-on-mobile" href="/seller">
+      <svg xmlns="http://www.w3.org/2000/svg" class="small-icon" fill="var(--accent-foreground-color)"
+           viewBox="0 0 640 512">
+        <path
+          d="M144 128a80 80 0 1 1 160 0 80 80 0 1 1 -160 0zm208 0A128 128 0 1 0 96 128a128 128 0 1 0 256 0zM49.3 464c8.9-63.3 63.3-112 129-112h91.4c18.7 0 36.5 3.9 52.6 11c-1.5-6.1-2.3-12.4-2.3-18.8v-33c-15.9-4.7-32.8-7.2-50.3-7.2H178.3C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c10 0 18.8-4.9 24.2-12.5L396.9 454c.7 3.3 1.3 6.6 1.8 10H49.3zM384 224c-17.7 0-32 14.3-32 32v82.7c0 17 6.7 33.3 18.7 45.3L478.1 491.3c18.7 18.7 49.1 18.7 67.9 0l73.4-73.4c18.7-18.7 18.7-49.1 0-67.9L512 242.7c-12-12-28.3-18.7-45.3-18.7H384zm24 80a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z" />
+      </svg>
+      Seller Account</a>
+    <a class="menu-item hidden-on-mobile" href="/faq">
+      <svg xmlns="http://www.w3.org/2000/svg" class="small-icon" fill="var(--accent-foreground-color)"
+           viewBox="0 0 640 512">
+        <path
+          d="M80.7 253.2c14.3 15 17.3 37.6 7.5 55.8c-1.1 2-2.2 4-3.2 5.9c-2.5 4.5-5.2 9-7.9 13.6c17.1-4.5 33.9-10.7 49.9-18c4.3-1.9 8.5-3.9 12.6-6c9.5-4.8 20.3-6.2 30.7-4.2c12.1 2.4 24.8 3.6 37.8 3.6c96.2 0 160-64.5 160-128s-63.8-128-160-128S48 112.5 48 176c0 28 11.4 54.9 32.7 77.2zM416 176c0 97.2-93.1 176-208 176c-16.2 0-31.9-1.6-47.1-4.5c-4.6 2.3-9.4 4.6-14.2 6.8C110.5 370.7 67 384 24 384c-9.6 0-18.2-5.7-22-14.5c-3.8-8.8-2-19 4.6-25.9c14.2-15.6 26.2-33.7 36.6-52.1c.9-1.7 1.9-3.4 2.8-5.1C17.2 256.1 0 217.8 0 176C0 78.8 93.1 0 208 0S416 78.8 416 176zM245.2 381.5c17.2-2.4 34-6.3 50-11.8C322 405.5 370.3 432 432 432c13.1 0 25.8-1.3 37.8-3.6c10.4-2 21.2-.6 30.7 4.2c4.1 2.1 8.3 4.1 12.6 6c16 7.2 32.9 13.5 49.9 18c-2.8-4.6-5.4-9.1-7.9-13.6c-1.1-1.9-2.2-3.9-3.2-5.9c-9.8-18.3-6.8-40.8 7.5-55.8C580.6 358.9 592 332 592 304c0-59.9-56.8-120.7-144-127.4l0-.6c0-16.6-2.2-32.6-6.2-47.8C552.1 132.5 640 209.6 640 304c0 41.8-17.2 80.1-45.9 110.3c.9 1.7 1.9 3.5 2.8 5.1c10.3 18.4 22.3 36.5 36.6 52.1c6.6 7 8.3 17.2 4.6 25.9c-3.8 8.8-12.5 14.5-22 14.5c-43 0-86.5-13.3-122.7-29.7c-4.8-2.2-9.6-4.5-14.2-6.8c-15.1 3-30.9 4.5-47.1 4.5c-82 0-153-40.2-186.8-98.5zM147.9 112.1c5.5-15.4 20.1-25.7 36.4-25.7h41.3c24.2 0 43.7 19.6 43.7 43.7c0 15.7-8.4 30.1-22 37.9L224 181.4v.3c0 8.8-7.2 16-16 16s-16-7.2-16-16v-9.5c0-5.7 3.1-11 8-13.9l31.4-18c3.6-2.1 5.9-6 5.9-10.2c0-6.5-5.3-11.7-11.7-11.7H184.3c-2.8 0-5.3 1.8-6.3 4.4l-.3 .9c-3 8.3-12.1 12.7-20.4 9.7s-12.7-12.1-9.7-20.4l.3-.9zM185.3 244a22.7 22.7 0 1 1 45.3 0 22.7 22.7 0 1 1 -45.3 0z" />
+      </svg>
+      F.A.Q</a>
+    <a class="menu-item" href="/tickets">
+      <svg xmlns="http://www.w3.org/2000/svg" class="small-icon" fill="var(--accent-foreground-color)"
+           viewBox="0 0 512 512">
+        <path
+          d="M48 256C48 141.1 141.1 48 256 48s208 93.1 208 208V400.1c0 22.1-17.9 40-40 40L313.6 440c-8.3-14.4-23.8-24-41.6-24H240c-26.5 0-48 21.5-48 48s21.5 48 48 48h32c17.8 0 33.3-9.7 41.6-24l110.4 .1c48.6 0 88.1-39.4 88.1-88V256C512 114.6 397.4 0 256 0S0 114.6 0 256v40c0 13.3 10.7 24 24 24s24-10.7 24-24V256zm112-32V336c-17.7 0-32-14.3-32-32V256c0-17.7 14.3-32 32-32zM80 256v48c0 44.2 35.8 80 80 80h16c17.7 0 32-14.3 32-32V208c0-17.7-14.3-32-32-32H160c-44.2 0-80 35.8-80 80zm272-32c17.7 0 32 14.3 32 32v48c0 17.7-14.3 32-32 32V224zm80 32c0-44.2-35.8-80-80-80H336c-17.7 0-32 14.3-32 32V352c0 17.7 14.3 32 32 32h16c44.2 0 80-35.8 80-80V256z" />
+      </svg>
+      Support</a>
+  </div>
+  <div class="menu">
+
+      <a class="cart-item" href="/cart"><svg class="small-icon" fill="var(--accent-foreground-color)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M24 0C10.7 0 0 10.7 0 24S10.7 48 24 48H69.5c3.8 0 7.1 2.7 7.9 6.5l51.6 271c6.5 34 36.2 58.5 70.7 58.5H488c13.3 0 24-10.7 24-24s-10.7-24-24-24H199.7c-11.5 0-21.4-8.2-23.6-19.5L170.7 288H459.2c32.6 0 61.1-21.8 69.5-53.3l41-152.3C576.6 57 557.4 32 531.1 32h-411C111 12.8 91.6 0 69.5 0H24zM131.1 80H520.7L482.4 222.2c-2.8 10.5-12.3 17.8-23.2 17.8H161.6L131.1 80zM176 512a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm336-48a48 48 0 1 0 -96 0 48 48 0 1 0 96 0z"/></svg>Cart (0 Items)</a>  </div>
+</div>
+
+<div class="rates">
+    <div class='center-aligned-justify-start small-gap'><svg xmlns='http://www.w3.org/2000/svg' class='big-icon' fill='var(--text-muted-foreground)' viewBox='0 0 512 512'><path d='M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zm-141.651-35.33c4.937-32.999-20.191-50.739-54.55-62.573l11.146-44.702-27.213-6.781-10.851 43.524c-7.154-1.783-14.502-3.464-21.803-5.13l10.929-43.81-27.198-6.781-11.153 44.686c-5.922-1.349-11.735-2.682-17.377-4.084l.031-.14-37.53-9.37-7.239 29.062s20.191 4.627 19.765 4.913c11.022 2.751 13.014 10.044 12.68 15.825l-12.696 50.925c.76.194 1.744.473 2.829.907-.907-.225-1.876-.473-2.876-.713l-17.796 71.338c-1.349 3.348-4.767 8.37-12.471 6.464.271.395-19.78-4.937-19.78-4.937l-13.51 31.147 35.414 8.827c6.588 1.651 13.045 3.379 19.4 5.006l-11.262 45.213 27.182 6.781 11.153-44.733a1038.209 1038.209 0 0 0 21.687 5.627l-11.115 44.523 27.213 6.781 11.262-45.128c46.404 8.781 81.299 5.239 95.986-36.727 11.836-33.79-.589-53.281-25.004-65.991 17.78-4.098 31.174-15.792 34.747-39.949zm-62.177 87.179c-8.41 33.79-65.308 15.523-83.755 10.943l14.944-59.899c18.446 4.603 77.6 13.717 68.811 48.956zm8.417-87.667c-7.673 30.736-55.031 15.12-70.393 11.292l13.548-54.327c15.363 3.828 64.836 10.973 56.845 43.035z'></path></svg><span class='title-col'>Bitcoin:</span>
+          <span class='big-text'>$79,056.12</span><span class='title-col hidden-on-mobile'>USD</span></div><div class='center-aligned-justify-start small-gap border-l'><svg xmlns='http://www.w3.org/2000/svg' class='big-icon' fill='var(--text-muted-foreground)' viewBox='0 0 496 512'><path d='M352 384h108.4C417 455.9 338.1 504 248 504S79 455.9 35.6 384H144V256.2L248 361l104-105v128zM88 336V128l159.4 159.4L408 128v208h74.8c8.5-25.1 13.2-52 13.2-80C496 119 385 8 248 8S0 119 0 256c0 28 4.6 54.9 13.2 80H88z'></path></svg><span class='title-col'>Monero:</span>
+          <span class='big-text'>$386.82</span><span class='title-col hidden-on-mobile'>USD</span></div></div>
+
+
+<div class="categories">
+    <a href="/login"><div class="account-btn"><svg xmlns="http://www.w3.org/2000/svg" class="small-icon" fill="var(--accent-foreground-color)" viewBox="0 0 512 512"><path d="M217 401L345 273c9.4-9.4 9.4-24.6 0-33.9L217 111c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l87 87L24 232c-13.3 0-24 10.7-24 24s10.7 24 24 24l246.1 0-87 87c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0zM344 80l80 0c22.1 0 40 17.9 40 40l0 272c0 22.1-17.9 40-40 40l-80 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l80 0c48.6 0 88-39.4 88-88l0-272c0-48.6-39.4-88-88-88l-80 0c-13.3 0-24 10.7-24 24s10.7 24 24 24z"/></svg><span class="title-col">Sign in</span></div></a><a href="/signup"><div class="account-btn" style="margin-top:15px;"><svg xmlns="http://www.w3.org/2000/svg"  class="small-icon" fill="var(--accent-foreground-color)" viewBox="0 0 640 512"><path d="M224 48a80 80 0 1 1 0 160 80 80 0 1 1 0-160zm0 208A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 96h91.4c65.7 0 120.1 48.7 129 112H49.3c8.9-63.3 63.3-112 129-112zm0-48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3zM504 312c0 13.3 10.7 24 24 24s24-10.7 24-24V248h64c13.3 0 24-10.7 24-24s-10.7-24-24-24H552V136c0-13.3-10.7-24-24-24s-24 10.7-24 24v64H440c-13.3 0-24 10.7-24 24s10.7 24 24 24h64v64z"/></svg><span class="title-col">Create a new account</span></div></a>  <div class="title-col" style="margin: 25px 0">Shop by category</div>
+    <input type="checkbox" id="category_btn_1" class="category_btn" /><label for="category_btn_1" class="category">Drugs</label><a href="/category/drugs"><div class="subcat subcat_1">Show all</div></a><a href="/category/benzos"><div class="subcat subcat_1">Benzos</div></a><a href="/category/ecstasy"><div class="subcat subcat_1">Ecstasy</div></a><a href="/category/opiods"><div class="subcat subcat_1">Opiods</div></a><a href="/category/psychedelics"><div class="subcat subcat_1">Psychedelics</div></a><a href="/category/cannabis"><div class="subcat subcat_1">Cannabis</div></a><a href="/category/stimulants"><div class="subcat subcat_1">Stimulants</div></a><a href="/category/dissociatives"><div class="subcat subcat_1">Dissociatives</div></a><a href="/category/steroids"><div class="subcat subcat_1">Steroids</div></a><a href="/category/prescription"><div class="subcat subcat_1">Prescription</div></a><a href="/category/common_raw_drugs"><div class="subcat subcat_1">Common Raw Drugs</div></a><a href="/category/rcs_china_suppliers"><div class="subcat subcat_1">Rcs China Suppliers</div></a><a href="/category/drugs_precursors"><div class="subcat subcat_1">Drugs Precursors</div></a><a href="/category/weight_scale"><div class="subcat subcat_1">Weight Scale</div></a><a href="/category/drugs_paraphernalia"><div class="subcat subcat_1">Drugs Paraphernalia</div></a><a href="/category/custom_orders"><div class="subcat subcat_1">Custom Orders</div></a><a href="/category/physical_drop"><div class="subcat subcat_1">Physical Drop</div></a><a href="/category/tobacco"><div class="subcat subcat_1">Tobacco</div></a><a href="/category/alcohol"><div class="subcat subcat_1">Alcohol</div></a><input type="checkbox" id="category_btn_2" class="category_btn" /><label for="category_btn_2" class="category">Civil Softwares</label><a href="/category/civil_softwares"><div class="subcat subcat_2">Show all</div></a><a href="/category/malware"><div class="subcat subcat_2">Malware</div></a><a href="/category/bootkits"><div class="subcat subcat_2">Bootkits</div></a><a href="/category/hacked_social_network_database"><div class="subcat subcat_2">Hacked Social Network Database</div></a><a href="/category/backdoors"><div class="subcat subcat_2">Backdoors</div></a><a href="/category/keyloggers"><div class="subcat subcat_2">Keyloggers</div></a><a href="/category/wireless_trackers"><div class="subcat subcat_2">Wireless Trackers</div></a><a href="/category/screen_scrapers"><div class="subcat subcat_2">Screen Scrapers</div></a><a href="/category/mobile_forensics_tools"><div class="subcat subcat_2">Mobile forensics tools</div></a><a href="/category/wifi_jammers"><div class="subcat subcat_2">WiFi Jammers</div></a><input type="checkbox" id="category_btn_3" class="category_btn" /><label for="category_btn_3" class="category">Tutorials</label><a href="/category/tutorials"><div class="subcat subcat_3">Show all</div></a><a href="/category/ebooks"><div class="subcat subcat_3">eBooks</div></a><a href="/category/theft"><div class="subcat subcat_3">Theft</div></a><a href="/category/carding"><div class="subcat subcat_3">Carding</div></a><a href="/category/mining"><div class="subcat subcat_3">Mining</div></a><a href="/category/gambling"><div class="subcat subcat_3">Gambling</div></a><a href="/category/worms"><div class="subcat subcat_3">Worms</div></a><a href="/category/dump"><div class="subcat subcat_3">Dump</div></a><a href="/category/viruses"><div class="subcat subcat_3">Viruses</div></a><a href="/category/drugs_production"><div class="subcat subcat_3">Drugs Production</div></a><a href="/category/trojans"><div class="subcat subcat_3">Trojans</div></a><a href="/category/botnets"><div class="subcat subcat_3">Botnets</div></a><a href="/category/cameras_and_photography"><div class="subcat subcat_3">Cameras and Photography</div></a><a href="/category/security_technology"><div class="subcat subcat_3">Security Technology</div></a><a href="/category/computers"><div class="subcat subcat_3">Computers</div></a><a href="/category/art"><div class="subcat subcat_3">Art</div></a><a href="/category/bribery"><div class="subcat subcat_3">Bribery</div></a><input type="checkbox" id="category_btn_4" class="category_btn" /><label for="category_btn_4" class="category">Confidential info</label><a href="/category/confidential_info"><div class="subcat subcat_4">Show all</div></a><input type="checkbox" id="category_btn_5" class="category_btn" /><label for="category_btn_5" class="category">Digital</label><a href="/category/digital"><div class="subcat subcat_5">Show all</div></a><a href="/category/cards_and_cvv"><div class="subcat subcat_5">Cards and CVV</div></a><a href="/category/hacks"><div class="subcat subcat_5">Hacks</div></a><a href="/category/porn"><div class="subcat subcat_5">Porn</div></a><a href="/category/ssn"><div class="subcat subcat_5">SSN</div></a><a href="/category/device_drivers"><div class="subcat subcat_5">Device drivers</div></a><a href="/category/application_software"><div class="subcat subcat_5">Application software</div></a><a href="/category/accounts"><div class="subcat subcat_5">Accounts</div></a><a href="/category/documents"><div class="subcat subcat_5">Documents</div></a><a href="/category/false_documents"><div class="subcat subcat_5">False Documents</div></a><a href="/category/surveillance"><div class="subcat subcat_5">Surveillance</div></a><a href="/category/exploit_kit"><div class="subcat subcat_5">Exploit kit</div></a><a href="/category/drop_bank"><div class="subcat subcat_5">Drop Bank</div></a><a href="/category/surgical_masks"><div class="subcat subcat_5">Surgical masks</div></a><a href="/category/security"><div class="subcat subcat_5">Security</div></a><a href="/category/vendors_equipment"><div class="subcat subcat_5">Vendors Equipment</div></a><a href="/category/digital_forensics"><div class="subcat subcat_5">Digital Forensics</div></a><a href="/category/system_software"><div class="subcat subcat_5">System software</div></a><a href="/category/0day"><div class="subcat subcat_5">0day</div></a><a href="/category/utilities"><div class="subcat subcat_5">Utilities</div></a><a href="/category/intelligence"><div class="subcat subcat_5">Intelligence</div></a><a href="/category/private_security"><div class="subcat subcat_5">Private Security</div></a><a href="/category/covid19_outbreak"><div class="subcat subcat_5">Covid19 Outbreak</div></a><a href="/category/racketeering"><div class="subcat subcat_5">Racketeering</div></a><a href="/category/software_forensics_tools"><div class="subcat subcat_5">Software forensics tools</div></a><a href="/category/apt"><div class="subcat subcat_5">APT</div></a><a href="/category/shill_marketing"><div class="subcat subcat_5">Shill Marketing</div></a><a href="/category/illegal_gambling"><div class="subcat subcat_5">Illegal Gambling</div></a><a href="/category/cash_crypto"><div class="subcat subcat_5">Cash to Crypto</div></a><a href="/category/media_and_influence"><div class="subcat subcat_5">Media and Influence</div></a><a href="/category/corruption"><div class="subcat subcat_5">Corruption</div></a><a href="/category/detectors"><div class="subcat subcat_5">Detectors</div></a><a href="/category/countersurveillance"><div class="subcat subcat_5">Countersurveillance</div></a><a href="/category/private_security_guards"><div class="subcat subcat_5">Private Security Guards</div></a><input type="checkbox" id="category_btn_6" class="category_btn" /><label for="category_btn_6" class="category">Forgery</label><a href="/category/forgery"><div class="subcat subcat_6">Show all</div></a><input type="checkbox" id="category_btn_7" class="category_btn" /><label for="category_btn_7" class="category">Network Services</label><a href="/category/network_services"><div class="subcat subcat_7">Show all</div></a><a href="/category/vpn"><div class="subcat subcat_7">VPN</div></a><a href="/category/hosting"><div class="subcat subcat_7">Hosting</div></a><a href="/category/socks"><div class="subcat subcat_7">SOCKS</div></a><input type="checkbox" id="category_btn_8" class="category_btn" /><label for="category_btn_8" class="category">Currency</label><a href="/category/currency"><div class="subcat subcat_8">Show all</div></a><a href="/category/counterfeiting"><div class="subcat subcat_8">Counterfeiting</div></a><a href="/category/crypto_cash"><div class="subcat subcat_8">Crypto to Cash</div></a><a href="/category/end_end_encrypted_phones"><div class="subcat subcat_8">End-to-end Encrypted Phones</div></a><input type="checkbox" id="category_btn_9" class="category_btn" /><label for="category_btn_9" class="category">Gold</label><a href="/category/gold"><div class="subcat subcat_9">Show all</div></a><a href="/category/other_jewelry"><div class="subcat subcat_9">Other Jewelry</div></a><a href="/category/yellow_gold"><div class="subcat subcat_9">Yellow Gold</div></a><input type="checkbox" id="category_btn_10" class="category_btn" /><label for="category_btn_10" class="category">Database</label><a href="/category/database"><div class="subcat subcat_10">Show all</div></a><a href="/category/email_databases"><div class="subcat subcat_10">Email Databases</div></a><a href="/category/phone_databases"><div class="subcat subcat_10">Phone Databases</div></a><a href="/category/messaggers_database"><div class="subcat subcat_10">Messaggers Database</div></a><a href="/category/hacked_sites_databases"><div class="subcat subcat_10">Hacked Sites Databases</div></a><a href="/category/logs"><div class="subcat subcat_10">Logs</div></a><a href="/category/ransomware"><div class="subcat subcat_10">Ransomware</div></a><input type="checkbox" id="category_btn_11" class="category_btn" /><label for="category_btn_11" class="category">Jewely</label><a href="/category/jewely"><div class="subcat subcat_11">Show all</div></a><a href="/category/watches"><div class="subcat subcat_11">Watches</div></a><input type="checkbox" id="category_btn_12" class="category_btn" /><label for="category_btn_12" class="category">Leaked Documents</label><a href="/category/leaked_documents"><div class="subcat subcat_12">Show all</div></a><input type="checkbox" id="category_btn_13" class="category_btn" /><label for="category_btn_13" class="category">Offshore services</label><a href="/category/offshore_services"><div class="subcat subcat_13">Show all</div></a><a href="/category/foreign_partnerships"><div class="subcat subcat_13">Foreign partnerships</div></a><input type="checkbox" id="category_btn_14" class="category_btn" /><label for="category_btn_14" class="category">Electronics</label><a href="/category/electronics"><div class="subcat subcat_14">Show all</div></a><a href="/category/mobile_phones"><div class="subcat subcat_14">Mobile Phones</div></a><a href="/category/sound_vision"><div class="subcat subcat_14">Sound Vision</div></a></div>
+<div class="main">
+    <form action="/result" method="post">
+  <div class="heading">
+    <svg class="small-icon" fill="var(--accent-foreground-color)" xmlns="http://www.w3.org/2000/svg"
+         viewBox="0 0 512 512">
+      <path
+        d="M368 208A160 160 0 1 0 48 208a160 160 0 1 0 320 0zM337.1 371.1C301.7 399.2 256.8 416 208 416C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208c0 48.8-16.8 93.7-44.9 129.1L505 471c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0L337.1 371.1z" />
+    </svg>
+    Quick Search
+  </div>
+  <div class="form search darkbox">
+    <div class="formElement">
+
+      <input type="text" id="keywords" name="keywords" autofocus placeholder="Search for listings, sellers..." />
+
+    </div>
+    <div class="searchForm">
+      <div class="formElement">
+        <label class="title-col" for="from">Ships from:</label>
+        <select id="from" name="from" class="form-control">
+          <option value="0">Anywhere</option>
+            <option value="3">Netherlands</option><option value="5">North America</option><option value="7">United States</option><option value="8">United Kingdom</option><option value="9">Worldwide</option><option value="10">Germany</option><option value="12">REG</option><option value="13">Europe</option><option value="15">Asia</option><option value="16">France</option><option value="17">Australia</option><option value="19">India</option><option value="20">Belgium</option><option value="22">Spain</option><option value="23">Ireland</option><option value="24">China</option><option value="27">South America</option><option value="28">Utrecth</option><option value="29">Canada</option><option value="31">Switzerland</option><option value="32">South Africa</option><option value="33">Brazil</option><option value="34">Nepal</option><option value="35">Turkey</option><option value="36">Norway</option><option value="37">Aix-en-Provence</option><option value="39">Portugal</option><option value="40">Denmark</option><option value="42">Poland</option><option value="43">Kansas City</option><option value="44">Italy</option><option value="46">Czech Republic</option><option value="47">Serbia</option><option value="48">London</option><option value="49">Valencia</option><option value="50">Holy See (Vatican City State)</option><option value="51">Korea, Republic of</option><option value="52">Brno</option><option value="53">Hungary</option><option value="54">Varna</option><option value="55">Austria</option><option value="56">Bolivia</option><option value="57">Russian Federation</option><option value="58">Malta</option><option value="59">Zimbabwe</option><option value="60">Bulgaria</option><option value="61">Afghanistan</option><option value="62">Åland Islands</option>        </select>
+      </div>
+      <div class="formElement">
+
+        <label class="title-col" for="to">Delivery to:</label>
+        <select id="to" name="to" class="form-control">
+          <option value="0">Anywhere</option>
+            <option value="3">Netherlands</option><option value="5">North America</option><option value="7">United States</option><option value="8">United Kingdom</option><option value="9">Worldwide</option><option value="10">Germany</option><option value="12">REG</option><option value="13">Europe</option><option value="15">Asia</option><option value="16">France</option><option value="17">Australia</option><option value="19">India</option><option value="20">Belgium</option><option value="22">Spain</option><option value="23">Ireland</option><option value="24">China</option><option value="27">South America</option><option value="28">Utrecth</option><option value="29">Canada</option><option value="31">Switzerland</option><option value="32">South Africa</option><option value="33">Brazil</option><option value="34">Nepal</option><option value="35">Turkey</option><option value="36">Norway</option><option value="37">Aix-en-Provence</option><option value="39">Portugal</option><option value="40">Denmark</option><option value="42">Poland</option><option value="43">Kansas City</option><option value="44">Italy</option><option value="46">Czech Republic</option><option value="47">Serbia</option><option value="48">London</option><option value="49">Valencia</option><option value="50">Holy See (Vatican City State)</option><option value="51">Korea, Republic of</option><option value="52">Brno</option><option value="53">Hungary</option><option value="54">Varna</option><option value="55">Austria</option><option value="56">Bolivia</option><option value="57">Russian Federation</option><option value="58">Malta</option><option value="59">Zimbabwe</option><option value="60">Bulgaria</option><option value="61">Afghanistan</option><option value="62">Åland Islands</option>        </select>
+      </div>
+      <div class="formElement">
+
+        <label class="title-col" for="selecat">Category:</label>
+        <select id="selecat" name="selecat" class="form-control">
+          <option value="0">All Categories</option>
+            <optgroup label="Drugs"><option value="1">Drugs (All Sub-categories)</option><option value="2">&rarr; Benzos</option><option value="3">&rarr; Ecstasy</option><option value="4">&rarr; Opiods</option><option value="5">&rarr; Psychedelics</option><option value="6">&rarr; Cannabis</option><option value="7">&rarr; Stimulants</option><option value="8">&rarr; Dissociatives</option><option value="9">&rarr; Steroids</option><option value="10">&rarr; Prescription</option><option value="11">&rarr; Common Raw Drugs</option><option value="13">&rarr; Rcs China Suppliers</option><option value="14">&rarr; Drugs Precursors</option><option value="15">&rarr; Weight Scale</option><option value="16">&rarr; Drugs Paraphernalia</option><option value="25">&rarr; Custom Orders</option><option value="31">&rarr; Physical Drop</option><option value="78">&rarr; Tobacco</option><option value="110">&rarr; Alcohol</option></optgroup><optgroup label="Civil Softwares"><option value="32">Civil Softwares (All Sub-categories)</option><option value="57">&rarr; Malware</option><option value="73">&rarr; Bootkits</option><option value="76">&rarr; Hacked Social Network Database</option><option value="82">&rarr; Backdoors</option><option value="99">&rarr; Keyloggers</option><option value="119">&rarr; Wireless Trackers</option><option value="125">&rarr; Screen Scrapers</option><option value="131">&rarr; Mobile forensics tools</option><option value="136">&rarr; WiFi Jammers</option></optgroup><optgroup label="Tutorials"><option value="33">Tutorials (All Sub-categories)</option><option value="35">&rarr; eBooks</option><option value="51">&rarr; Theft</option><option value="54">&rarr; Carding</option><option value="55">&rarr; Mining</option><option value="60">&rarr; Gambling</option><option value="61">&rarr; Worms</option><option value="65">&rarr; Dump</option><option value="71">&rarr; Viruses</option><option value="87">&rarr; Drugs Production</option><option selected value="90">&rarr; Trojans</option><option value="97">&rarr; Botnets</option><option value="98">&rarr; Cameras and Photography</option><option value="106">&rarr; Security Technology</option><option value="117">&rarr; Computers</option><option value="132">&rarr; Art</option><option value="134">&rarr; Bribery</option></optgroup><optgroup label="Confidential info"><option value="34">Confidential info (All Sub-categories)</option></optgroup><optgroup label="Digital"><option value="36">Digital (All Sub-categories)</option><option value="37">&rarr; Cards and CVV</option><option value="38">&rarr; Hacks</option><option value="39">&rarr; Porn</option><option value="40">&rarr; SSN</option><option value="41">&rarr; Device drivers</option><option value="42">&rarr; Application software</option><option value="44">&rarr; Accounts</option><option value="49">&rarr; Documents</option><option value="50">&rarr; False Documents</option><option value="64">&rarr; Surveillance</option><option value="68">&rarr; Exploit kit</option><option value="75">&rarr; Drop Bank</option><option value="79">&rarr; Surgical masks</option><option value="80">&rarr; Security</option><option value="83">&rarr; Vendors Equipment</option><option value="84">&rarr; Digital Forensics</option><option value="86">&rarr; System software</option><option value="88">&rarr; 0day</option><option value="92">&rarr; Utilities</option><option value="93">&rarr; Intelligence</option><option value="95">&rarr; Private Security</option><option value="96">&rarr; Covid19 Outbreak</option><option value="103">&rarr; Racketeering</option><option value="104">&rarr; Software forensics tools</option><option value="107">&rarr; APT</option><option value="113">&rarr; Shill Marketing</option><option value="115">&rarr; Illegal Gambling</option><option value="116">&rarr; Cash to Crypto</option><option value="121">&rarr; Media and Influence</option><option value="123">&rarr; Corruption</option><option value="129">&rarr; Detectors</option><option value="133">&rarr; Countersurveillance</option><option value="137">&rarr; Private Security Guards</option></optgroup><optgroup label="Forgery"><option value="43">Forgery (All Sub-categories)</option></optgroup><optgroup label="Network Services"><option value="45">Network Services (All Sub-categories)</option><option value="46">&rarr; VPN</option><option value="53">&rarr; Hosting</option><option value="91">&rarr; SOCKS</option></optgroup><optgroup label="Currency"><option value="47">Currency (All Sub-categories)</option><option value="48">&rarr; Counterfeiting</option><option value="77">&rarr; Crypto to Cash</option><option value="128">&rarr; End-to-end Encrypted Phones</option></optgroup><optgroup label="Gold"><option value="52">Gold (All Sub-categories)</option><option value="70">&rarr; Other Jewelry</option><option value="135">&rarr; Yellow Gold</option></optgroup><optgroup label="Database"><option value="63">Database (All Sub-categories)</option><option value="67">&rarr; Email Databases</option><option value="69">&rarr; Phone Databases</option><option value="85">&rarr; Messaggers Database</option><option value="101">&rarr; Hacked Sites Databases</option><option value="102">&rarr; Logs</option><option value="114">&rarr; Ransomware</option></optgroup><optgroup label="Jewely"><option value="72">Jewely (All Sub-categories)</option><option value="124">&rarr; Watches</option></optgroup><optgroup label="Leaked Documents"><option value="74">Leaked Documents (All Sub-categories)</option></optgroup><optgroup label="Offshore services"><option value="81">Offshore services (All Sub-categories)</option><option value="109">&rarr; Foreign partnerships</option></optgroup><optgroup label="Electronics"><option value="111">Electronics (All Sub-categories)</option><option value="112">&rarr; Mobile Phones</option><option value="127">&rarr; Sound Vision</option></optgroup>        </select>
+      </div>
+    </div>
+    <button class="">
+
+      Search
+    </button>
+  </div>
+</form>
+
+<div class="heading">
+        <svg class="small-icon" fill="var(--accent-foreground-color)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M24 48C10.7 48 0 58.7 0 72v48c0 13.3 10.7 24 24 24V256 384c0 30.9 25.1 56 56 56h48c0 13.3 10.7 24 24 24h48c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H152c-13.3 0-24 10.7-24 24H80c-4.4 0-8-3.6-8-8V280h56c0 13.3 10.7 24 24 24h48c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H152c-13.3 0-24 10.7-24 24H72V144c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H24zM160 96c0 13.3 10.7 24 24 24H488c13.3 0 24-10.7 24-24s-10.7-24-24-24H184c-13.3 0-24 10.7-24 24zM288 256c0 13.3 10.7 24 24 24H488c13.3 0 24-10.7 24-24s-10.7-24-24-24H312c-13.3 0-24 10.7-24 24zm0 160c0 13.3 10.7 24 24 24H488c13.3 0 24-10.7 24-24s-10.7-24-24-24H312c-13.3 0-24 10.7-24 24z"/></svg>Trojans (All Listings)</div><div class="items"><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/wmVffN4HNZ2EJkRSTVx93C2unBPSsmSL"><div class="image" title="Guide Cc/cvv To Gift Cards Including Video" style="background-image:url('/image.php?product=wmVffN4HNZ2EJkRSTVx93C2unBPSsmSL&image=1');"></div><div class="info"><div class="title">Guide Cc/cvv To Gift Cards Including Video</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">INSTANT DELIVERY TO YOUR INBOX
+Latest guides and videos on how to CASHOUT to gift cards!
+This is a pack of multiple guides on gift carding and a list of easily
+cardable websites to go with it.</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$5.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/eternos"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>ETERNOS</span></a></div><a href="/product/aHkCW80KeqESfivyNrA3hTdwjQsClFwW"><div class="image" title="Azorult 3.3 Azorult Powerful Trojan 3.3 Version" style="background-image:url('/image.php?product=aHkCW80KeqESfivyNrA3hTdwjQsClFwW&image=1');"></div><div class="info"><div class="title">Azorult 3.3 Azorult Powerful Trojan 3.3 Version</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">
+AZORult is a powerful trojan malware that harvests and ex-filtrates data from the compromised system. It is installed on a system via a first-stage malware, such as Seamless. The malware searches for...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$79.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/Rs4OUfmEqEhoDIsViB6dryPGnFf0NTCq"><div class="image" title="20 Carding Videos + 55 Methods Cashout Cc To Btc" style="background-image:url('/image.php?product=Rs4OUfmEqEhoDIsViB6dryPGnFf0NTCq&image=1');"></div><div class="info"><div class="title">20 Carding Videos + 55 Methods Cashout Cc To Btc</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">ORIGINAL 20 CARDING VIDEOS + 55 METHOS CASHOUT CC TO BTC +45 GB
+6k/Day + 12.000 METHODS 
+
+ FREE BONUS ITEMS FOR LEAVING POSITIVE FEEDBACK 
+
+Welcome, are you ready to make some serious cash? Enough buy...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$6.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/eternos"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>ETERNOS</span></a></div><a href="/product/5a8z4yqOSA6p8RjMctZA0uvyouvfPQFl"><div class="image" title="Top List Of Advanced Keyloggers - Clean" style="background-image:url('/image.php?product=5a8z4yqOSA6p8RjMctZA0uvyouvfPQFl&image=1');"></div><div class="info"><div class="title">Top List Of Advanced Keyloggers - Clean</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">some few features :
+  
+    Keylogger + Clipboard Stealer
+    Screen Capture
+    Password Stealing Browsers, Mail Clients, FTP clients, Chat Clients
+    Data exfiltration via SMTP, FTP or Telegram
+    ...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$119.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/NF2fBxaXV5NAbWIUiaRWMnqLeiOy5V4k"><div class="image" title="Android Carding Setup No Rooting Cashout Hacking" style="background-image:url('/image.php?product=NF2fBxaXV5NAbWIUiaRWMnqLeiOy5V4k&image=1');"></div><div class="info"><div class="title">Android Carding Setup No Rooting Cashout Hacking</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">★★★★INSTANT DELIVERY TO YOUR INBOX★★★★
+
+THIS IS THE BEST AND EASIEST GUIDE TO MAKING YOUR ANDROID DEVICE A CARDING
+WEAPON, NO BULLSHIT.
+
+EASY TO SETUP, NO ROOTING YOUR PHONE NEEDED, AL...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$5.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/HmVj1uzBFa5POvQy4Kki2xdZhYTM2Dhj"><div class="image" title="Socks5 Clean Proxy - Socks + Country + City + Zip" style="background-image:url('/image.php?product=HmVj1uzBFa5POvQy4Kki2xdZhYTM2Dhj&image=1');"></div><div class="info"><div class="title">Socks5 Clean Proxy - Socks + Country + City + Zip</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">VERY IMPORTANT!
+I will provide the closest socks5 based on your request. 
+The proxy will usually work for 12 HOURS, more if you are lucky. Plenty of time to do what you need. This is NOT a lifetime pr...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$5.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/E60tuUhFtI6CF1CIlwVfugYBi957ItF8"><div class="image" title="Apple Pay Carding Guide Make Thousands Updated" style="background-image:url('/image.php?product=E60tuUhFtI6CF1CIlwVfugYBi957ItF8&image=1');"></div><div class="info"><div class="title">Apple Pay Carding Guide Make Thousands Updated</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">★★★★INSTANT  DELIVERY TO YOUR INBOX★★★★
+
+I would first like to introduce myself. My name is breadsdrugged,I have spent more than 5 years making money online with sly methods. 
+I have a...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$7.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/eternos"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>ETERNOS</span></a></div><a href="/product/G6XVHbB4DZvLutmXI60AEUY204o2DdK6"><div class="image" title="Top Used Andriod Trojan - Spy On Andriods" style="background-image:url('/image.php?product=G6XVHbB4DZvLutmXI60AEUY204o2DdK6&image=1');"></div><div class="info"><div class="title">Top Used Andriod Trojan - Spy On Andriods</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">Top used Andriod Trojan - Spy on Andriod users- Support Included
+List of Tools to Hack and Gain access to Targeted Android Phone
+
++ Inbuilt APK Tool
++ File Voyager
++ SMS Trekker
++ Call Manager
++ Conta...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$149.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/eternos"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>ETERNOS</span></a></div><a href="/product/KpEbE8rO1gyvLLRGto8kSQ1QHGpwdl03"><div class="image" title="Limerat Ransomware Miner Ddos Btc Stealer Bypass" style="background-image:url('/image.php?product=KpEbE8rO1gyvLLRGto8kSQ1QHGpwdl03&image=1');"></div><div class="info"><div class="title">Limerat Ransomware Miner Ddos Btc Stealer Bypass</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">LimeRAT   Ransomware     Miner     DDoS     BTC Stealer     Bypass AV     Multi Ports     Stable
+
+LimeRAT  source code
+Simple yet powerful RAT which targeting Windows OS for educational purposes     T...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$129.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/yq3h7toRpa2RERJKPaBljJbBqhhJqIMS"><div class="image" title="85,000 Items Fraud Bible 36gb" style="background-image:url('/image.php?product=yq3h7toRpa2RERJKPaBljJbBqhhJqIMS&image=1');"></div><div class="info"><div class="title">85,000 Items Fraud Bible 36gb</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">INSTANT  DELIVERY TO YOUR INBOX
+
+This is the largest pack on the market currently.  You will not find a
+better deal anywhere else I guarantee it.  This has everything you would
+ever need to become a p...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$5.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/eternos"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>ETERNOS</span></a></div><a href="/product/AmO8mkRRipJmQwvVB09sxtwuiGSkWtMH"><div class="image" title="Trojan + Bitcoin Clipper Crypt Full Hacking Course" style="background-image:url('/image.php?product=AmO8mkRRipJmQwvVB09sxtwuiGSkWtMH&image=1');"></div><div class="info"><div class="title">Trojan + Bitcoin Clipper Crypt Full Hacking Course</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">TROJAN + BITCOIN CLIPPER + CRYPT . Tutoring hacks. Full Hacking Course
+
+You will get a full Hacking Course.
+
+You will have a RAT : Remote Access Trojan 
+The RAT has the functionality of any RAT plus B...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$399.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/eternos"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>ETERNOS</span></a></div><a href="/product/W00d44o6OBF4kAfndYNf0BOQRHIfHhYT"><div class="image" title="Venom Trojan 550 " style="background-image:url('/image.php?product=W00d44o6OBF4kAfndYNf0BOQRHIfHhYT&image=1');"></div><div class="info"><div class="title">Venom Trojan 550 </div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">VENOM SOFTWARE 550 Remote Access Tool - Trojan RAT
+
+Only 100
+
+You get a unique link to download the RAT</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$100.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/LLi83xnLrt6hPWxVrrdDHQxg2HvHZMmv"><div class="image" title="Western Union And Moneygram Guide Cc/cvv" style="background-image:url('/image.php?product=LLi83xnLrt6hPWxVrrdDHQxg2HvHZMmv&image=1');"></div><div class="info"><div class="title">Western Union And Moneygram Guide Cc/cvv</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">★★★★INSTANT  DELIVERY TO YOUR INBOX★★★★
+
+This method is the fastest cashout method available at this tine and the
+easiest. If done right you can cashout multiple times in one day.
+
+
+We...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$5.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/YBNdScumCVAhkoMyAaB4pLuEcWdowSna"><div class="image" title="Watch Me Cashout Credit Card In Front Of You" style="background-image:url('/image.php?product=YBNdScumCVAhkoMyAaB4pLuEcWdowSna&image=1');"></div><div class="info"><div class="title">Watch Me Cashout Credit Card In Front Of You</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">INSTANT DELIVERY TO YOUR INBOX
+
+Watch me cashing out CC right in front of your eyes. 
+COPY ME and make some  
+Don t BUY crap outdated guides, get a real VIDEO TUTORIAL and never look
+back  
+
+Probably ...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$5.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/eternos"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>ETERNOS</span></a></div><a href="/product/f1Uwe6SZC5UQFL8vyV1B7ZBMW5wXKQWQ"><div class="image" title="Top Botnet List - Get Your Own Botnet Today " style="background-image:url('/image.php?product=f1Uwe6SZC5UQFL8vyV1B7ZBMW5wXKQWQ&image=1');"></div><div class="info"><div class="title">Top Botnet List - Get Your Own Botnet Today </div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">Top Botnet List - Get your own botnet Today - Support Included.
+
+A botnet is a collection of internet-connected devices infected
+ by malware that allow hackers to control them. Cyber criminals
+ use bo...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$189.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/GvDk6fxGyg6B7PxRzHhVQjUPNsBcRMTC"><div class="image" title="Fullz Cashout Guide Latest Cc/cvv Online Shopping" style="background-image:url('/image.php?product=GvDk6fxGyg6B7PxRzHhVQjUPNsBcRMTC&image=1');"></div><div class="info"><div class="title">Fullz Cashout Guide Latest Cc/cvv Online Shopping</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">★★★INSTANT DELIVERY TO YOUR INBOX★★★
+
+
+This will teach you how to cashout CC/CVV and FULLZ online shopping.
+
+IMPORTANT: THIS IS A GUIDE, NOT FULLZ</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$5.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/utA9IBHu5VE2ARqsJwbsTjqpfeycn2PZ"><div class="image" title="Print Usps/fedex/canada Post Labels Anonymous" style="background-image:url('/image.php?product=utA9IBHu5VE2ARqsJwbsTjqpfeycn2PZ&image=1');"></div><div class="info"><div class="title">Print Usps/fedex/canada Post Labels Anonymous</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">★★★INSTANT DELIVERY TO YOUR INBOX★★★
+
+-Dhl is also sometimes available
+
+If you are looking for printed labels for your packages but want to stay
+anonymous then this is for you.  I scoured ...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$5.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/FfYxNGTjrCIL90zujE4P2RE2UK0cmOLd"><div class="image" title="Bitcoin Stealer + Address Generator Easy" style="background-image:url('/image.php?product=FfYxNGTjrCIL90zujE4P2RE2UK0cmOLd&image=1');"></div><div class="info"><div class="title">Bitcoin Stealer + Address Generator Easy</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">★★★INSTANT DELIVERY TO YOUR INBOX★★★
+
+This is the easiest to setup Bitcoin Stealer available on the market at
+this time.  
+Once you get setup and you disperse the stealer you can easily ma...</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$5.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div><div class="item"><div class="seller"><a href="/user/breadsdrugged"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="small-icon" fill="var(--accent-foreground-color)"><path d="M406.5 399.6C387.4 352.9 341.5 320 288 320H224c-53.5 0-99.4 32.9-118.5 79.6C69.9 362.2 48 311.7 48 256C48 141.1 141.1 48 256 48s208 93.1 208 208c0 55.7-21.9 106.2-57.5 143.6zm-40.1 32.7C334.4 452.4 296.6 464 256 464s-78.4-11.6-110.5-31.7c7.3-36.7 39.7-64.3 78.5-64.3h64c38.8 0 71.2 27.6 78.5 64.3zM256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-272a40 40 0 1 1 0-80 40 40 0 1 1 0 80zm-88-40a88 88 0 1 0 176 0 88 88 0 1 0 -176 0z"/></svg><span>BREADSDRUGGED</span></a></div><a href="/product/mrlqzEL5m4hUuLKhNKihlqd96kVx1epA"><div class="image" title="How To Safely Pass Counterfeit Money" style="background-image:url('/image.php?product=mrlqzEL5m4hUuLKhNKihlqd96kVx1epA&image=1');"></div><div class="info"><div class="title">How To Safely Pass Counterfeit Money</div>
+    <div class="stats">
+        <table >
+            <tr><td><div class="stars"><div class="stars2" style="width:0%"></div></div></td></tr>
+
+        </table>
+    </div>
+    <div class="description">★★★INSTANT DELIVERY TO YOUR INBOX★★★
+
+This will teach you how to safely pass counterfeit money.</div>
+
+    <div class="shipping">Worldwide > Worldwide</div>
+
+    <div class="buttons">
+        <div class="price">$5.00 <span class='title-col'>(USD)</span></div>
+    </div></div></a></div></div><div class="pages"><div class="page activepage">1</div></div></div>
+

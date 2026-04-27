@@ -165,8 +165,11 @@ def scrape_multiple(urls_data, max_workers=5, max_return_chars=DEFAULT_MAX_RETUR
                     continue
                 if len(content) > max_return_chars:
                     suffix = "...(truncated)"
-                    available = max_return_chars - len(suffix)
-                    content = content[:max(0, available)] + suffix
+                    if max_return_chars <= len(suffix):
+                        # Cap is smaller than the suffix itself — just hard-truncate.
+                        content = content[:max_return_chars]
+                    else:
+                        content = content[:max_return_chars - len(suffix)] + suffix
                 results[url] = content
             except Exception as exc:
                 _logger.debug("Worker failed to scrape a URL: %s", exc)

@@ -26,12 +26,39 @@ LLM_MAX_RETRIES = 3
 LLM_RETRY_BASE_DELAY = 2
 
 # Exceptions that are safe to retry (transient failures).
-_RETRYABLE_EXCEPTIONS = (
+# Provider SDKs (anthropic, google.api_core) are imported defensively: if the
+# package is missing the entry is simply omitted, so retry coverage scales
+# with whichever providers are installed.
+_retryable: list = [
     openai.RateLimitError,
     openai.APITimeoutError,
     openai.APIConnectionError,
     openai.InternalServerError,   # 5xx from OpenAI-compatible providers
-)
+]
+
+try:
+    import anthropic
+    _retryable.extend([
+        anthropic.RateLimitError,
+        anthropic.APITimeoutError,
+        anthropic.APIConnectionError,
+        anthropic.InternalServerError,
+    ])
+except ImportError:
+    pass
+
+try:
+    from google.api_core import exceptions as _google_exc
+    _retryable.extend([
+        _google_exc.ResourceExhausted,    # 429
+        _google_exc.ServiceUnavailable,   # 503
+        _google_exc.DeadlineExceeded,     # 504
+        _google_exc.InternalServerError,  # 500
+    ])
+except ImportError:
+    pass
+
+_RETRYABLE_EXCEPTIONS = tuple(_retryable)
 
 # Batch size for the LLM filter step — keeps each prompt well within context limits.
 FILTER_BATCH_SIZE = 25
@@ -117,6 +144,9 @@ def _invoke_with_retry(chain, inputs: dict, stage: str = "LLM call"):
             return chain.invoke(inputs)
         except _RETRYABLE_EXCEPTIONS as exc:
             last_exc = exc
+            if attempt >= LLM_MAX_RETRIES:
+                # Out of attempts — raise immediately rather than sleeping.
+                break
             delay = LLM_RETRY_BASE_DELAY * (2 ** (attempt - 1))
             logging.warning(
                 "[%s] attempt %d/%d failed (%s: %s) — retrying in %.0fs",
